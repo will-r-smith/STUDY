@@ -248,6 +248,8 @@ class Experiment:
                     optimizer.step()
 
                     print(self.trainable_parameters[0].data[:5, :5])
+                    
+                    torch.cuda.empty_cache()
 
                 epoch_loss, epoch_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
