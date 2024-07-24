@@ -153,7 +153,7 @@ class Experiment:
         
         input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X, y)
 
-        outputs = self.model(input_ids_tensor)
+        outputs = self.edited_model(input_ids_tensor)
         logits = outputs.logits
 
         loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
