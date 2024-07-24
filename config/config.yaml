@@ -1,0 +1,100 @@
+# General settings
+project:
+  name: "SELF"
+  version: "1.0.0"
+
+# Data settings
+data:
+  dataset_path: "data/"
+  batch_size: 32
+
+# Output settings
+outputs:
+  base_folder: "outputs"
+  plots_folder: "plots"
+  results_folder: "results"
+  weights_folder: "weights"
+
+# Model settings
+pythia:
+  type: "decoder"
+  num_layers: 6
+  naming_conv:
+    base: "gpt_neox.layers."
+    layers: 
+      k_proj: "attention.query_key_value.weight"
+      q_proj: "attention.query_key_value.weight"
+      v_proj: "attention.query_key_value.weight"
+      out_proj: "attention.dense.weight"
+      fc_in: "mlp.dense_h_to_4h.weight"
+      fc_out: "mlp.dense_4h_to_h.weight"
+
+
+gptj: 
+  type: "decoder"
+  num_layers: 28
+  naming_conv:
+    base: "transformer.h."
+    layers: 
+      k_proj: ".attn.k_proj.weight"
+      q_proj: ".attn.q_proj.weight"
+      v_proj: ".attn.v_proj.weight"
+      out_proj: ".attn.out_proj.weight"
+      fc_in: ".mlp.fc_in.weight"
+      fc_out: ".mlp.fc_out.weight"
+
+roberta:
+  type: "encoder_decoder"
+  num_layers: 12
+  naming_conv:
+    base: "roberta.encoder.layer."
+    layers: 
+      k_proj: "attention.self.key.weight"
+      q_proj: "attention.self.query.weight"
+      v_proj: "attention.self.value.weight"
+      out_proj: "attention.output.dense.weight"
+      fc_in: "intermediate.dense.weight"
+      fc_out: "output.dense.weight"
+
+Arguments:
+  lname:
+    arg: "Layer name"
+    values:
+      k_proj: "Attention (key)"
+      q_proj: "Attention (query)"
+      v_proj: "Attention (value)"
+      out_proj: "Attention (out)"
+      fc_in: "MLP input"
+      fc_out: "MLP output"
+  lnum:
+    arg: "Layer number"
+    values: "num"
+  rate:
+    arg: "Reduction rate"
+    values: "num"
+  prop_data:
+    arg: "Proportion of dataset"
+    values: "num"
+  dataset:
+    arg: "Evaluation dataset"
+    values:
+      counterfact: "Counterfact"
+  model:
+    arg: "Model"
+    values: 
+      roberta: Roberta
+      pythia: Pythia
+  k:
+    arg: "Top-k for evaluation"
+    values: "num"
+  batch_size:
+    arg: "Batch size"
+    values: "num"
+  intervention:
+    arg: "Type of intervention"
+    values:
+      lr: "Low rank approximation"
+      mm: "Monarch matrix approximation"
+
+
+
