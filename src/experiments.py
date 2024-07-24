@@ -13,6 +13,8 @@ from src.matrix_utils import norms, do_lr, do_mm
 class Experiment:
 
     def __init__(self, args, config):
+        torch.cuda.empty_cache()
+        
         self.args = args
         self.config = config
 
@@ -204,6 +206,9 @@ class Experiment:
 
 
     def fine_tune(self):
+
+        torch.cuda.empty_cache()
+
         self.load_dataset()
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
