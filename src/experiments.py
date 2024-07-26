@@ -133,10 +133,10 @@ class Experiment:
                 attention_mask_list.append(inputs.attention_mask)
 
                 # Tokenize the answer
-                gold_answer_token_ids = self.tokenizer(answer, return_tensors="pt").input_ids
+                gold_answer_token_ids = self.tokenizer(answer).input_ids
 
                 # Use the first token of the gold answer for comparison
-                gold_answer_token_id = gold_answer_token_ids[0, 0].item()
+                gold_answer_token_id = int(gold_answer_token_ids[0])
                 gold_answer_token_ids_list.append(gold_answer_token_id)
 
         input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
