@@ -156,16 +156,16 @@ class Experiment:
         for question, answer in zip(X, y):
             input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
-            with torch.no_grad():
-                torch.cuda.empty_cache()
-                outputs = model(input_ids_tensor)
-                logits = outputs.logits
+            #with torch.no_grad():
+            torch.cuda.empty_cache()
+            outputs = model(input_ids_tensor)
+            logits = outputs.logits
 
-                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-                total_loss += loss
+            loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+            total_loss += loss
 
-                predictions = logits[:, -1, :].argmax(dim=-1)
-                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+            predictions = logits[:, -1, :].argmax(dim=-1)
+            correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
 
         avg_loss = total_loss / len(X)
         accuracy = correct_predictions / len(X)
@@ -210,9 +210,13 @@ class Experiment:
 
 
 
+
     def fine_tune(self):
+
         torch.cuda.empty_cache()
+
         self.load_dataset()
+
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
@@ -225,15 +229,17 @@ class Experiment:
         for name, param in parameters:
             print(name)
             self.edited_model = deepcopy(self.original_model)
+
+
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
-            # Ensure trainable parameters require gradients
-            for p in self.trainable_parameters:
-                p.requires_grad = True
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
+            
+
 
             print(self.trainable_parameters[0].data[:5, :5])
+
 
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
@@ -245,20 +251,19 @@ class Experiment:
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
 
-                    # Ensure the model is in training mode for this part
-                    self.edited_model.train()
-                    
                     batch_loss, _ = self.evaluate(self.edited_model, X_batch, y_batch)
 
                     print(f"Batch Loss:{batch_loss.item()}")
 
                     optimizer.zero_grad()
-                    batch_loss.backward()  # This should now work correctly
+                    batch_loss.backward()
                     optimizer.step()
 
                     print(self.trainable_parameters[0].data[:5, :5])
+                    
 
                 epoch_loss, epoch_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
+
                 best_loss = 0
 
                 # Print some stuff
