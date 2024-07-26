@@ -194,6 +194,7 @@ class Experiment:
                     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
                     batch_loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
+                    print(batch_loss)
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -211,7 +212,11 @@ class Experiment:
 
                 # Write something to preserve the best model and return to this at the end
 
-            final_loss, final_accuracy = self.evaluate(self.edited_model, self.X, self.y)
+            final_loss, final_top1_accuracy, final_top10_accuracy = self.evaluate(self.edited_model, self.X, self.y)
+
+            print(final_loss)
+            print(final_top1_accuracy)
+            print(final_top10_accuracy)
                 
                     
 
