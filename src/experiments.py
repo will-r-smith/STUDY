@@ -242,7 +242,7 @@ class Experiment:
         batch_size = 32
 
 
-        for i in tqdm(range(0, len(X), 8)):
+        for i in tqdm(range(0, len(X), batch_size)):
             my_batch_size = min(batch_size, len(X) - i)
             batch_x = X[i: i + my_batch_size]
             batch_y = y[i: i + my_batch_size]
