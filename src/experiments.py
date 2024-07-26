@@ -169,7 +169,7 @@ class Experiment:
                 predictions = logits.argmax(dim=-1)
 
                 # Decode the predictions and gold answers
-                predicted_text = self.tokenizer.decode(predictions[0], skip_special_tokens=True)
+                predicted_text = self.tokenizer.decode(predictions, skip_special_tokens=True)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
 
                 if idx < 20:  # Print only for the first 20 datapoints
