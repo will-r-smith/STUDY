@@ -146,6 +146,7 @@ class Experiment:
 
         for question, answer in zip(X, y):
             input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+            gold_answer_token_id = torch.tensor([gold_answer_token_id], dtype=torch.long).to(self.device)
 
             with torch.no_grad():
                 outputs = model(input_ids_tensor)
@@ -242,7 +243,8 @@ class Experiment:
                         torch.cuda.empty_cache()
 
                         input_ids_tensor, gold_answer_token_id = self.get_token_ids(question, answer)
-                        gold_answer_token_id = torch.tensor([gold_answer_token_id]).to(self.device)
+                        gold_answer_token_id = torch.tensor([gold_answer_token_id], dtype=torch.long).to(self.device)
+
 
                         with autocast():  # Mixed precision
                             outputs = self.edited_model(input_ids_tensor)
