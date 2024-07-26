@@ -161,7 +161,8 @@ class Experiment:
                 
                 logits = outputs.logits
 
-                
+                print(logits.size())
+                print(gold_answer_token_ids_tensor.size())
 
                 # Align logits with gold_answer_token_ids_tensor shape
                 logits = logits[:, -1, :]
@@ -169,6 +170,7 @@ class Experiment:
                 # Calculate loss over the entire sequence
                 loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
                 total_loss += loss.item()
+                print(loss)
 
                 predictions = logits.topk(3, dim=-1).indices
                 print(gold_answer_token_ids_tensor)
