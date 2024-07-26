@@ -134,8 +134,8 @@ class Experiment:
 
                 gold_answer_token_ids = self.tokenizer(stripped_answer)["input_ids"]
                 #print(gold_answer_token_ids)
-                gold_answer_token_id = int(gold_answer_token_ids[1])
-                gold_answer_token_ids_list.append(gold_answer_token_id)
+                #gold_answer_token_id = int(gold_answer_token_ids[1])
+                gold_answer_token_ids_list.append([gold_answer_token_ids])
 
         input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
         attention_mask_tensor = torch.cat(attention_mask_list, dim=0).to(self.device)
@@ -164,7 +164,7 @@ class Experiment:
                 predictions = logits[:, -1, :].argmax(dim=-1)
 
                 # Decode the predictions and gold answers
-                predicted_text = self.tokenizer.decode(predictions[0])
+                predicted_text = self.tokenizer.decode(predictions[1])
                 gold_answer_text = self.tokenizer.decode([gold_answer_token_ids_tensor[0]])
 
                 if idx < 20:  # Print only for the first 20 datapoints
