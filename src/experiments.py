@@ -235,18 +235,10 @@ class Experiment:
 
         answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
 
-        answer_ids = []
-        for answer in answers:
-            id = self.tokenizer(answer)["input_ids"]
-            print(id)
-            answer_ids.append(id[1])
-
-
-        print(answer_ids)
+        answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in answers]
 
         #answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
         answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
-        print(answer_ids)
         return input_ids, mask_ids, answer_ids
 
 
@@ -292,7 +284,8 @@ class Experiment:
             print(loss)
 
             top_tokens = torch.topk(predicted_logprob, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
-            decoded_top_tokens = [self.tokenizer.decode(tokens) for tokens in top_tokens]
+            decoded_top_tokens = [self.tokenizer.decode(tokens.tolist()) for tokens in top_tokens]
+
 
             print(decoded_top_tokens)
 
