@@ -167,13 +167,13 @@ class Experiment:
 
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
-        print(f"Original Loss:{original_loss.item()}")
-        print(f"Original Accuracy:{original_accuracy}")
+        #print(f"Original Loss:{original_loss.item()}")
+        #print(f"Original Accuracy:{original_accuracy}")
 
         parameters = self.get_parameters()
 
         for name, param in parameters:
-            print(name)
+            #print(name)
             self.edited_model = deepcopy(self.original_model)
 
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
@@ -204,7 +204,7 @@ class Experiment:
                     torch.cuda.empty_cache()
                     batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
 
-                    print(f"Batch Loss:{batch_loss.item()}")
+                    #print(f"Batch Loss:{batch_loss.item()}")
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -217,7 +217,7 @@ class Experiment:
                 best_loss = 0
 
                 # Print some stuff
-                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
+                #print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
                 # Write something to preserve the best model and return to this at the end
 
@@ -256,7 +256,6 @@ class Experiment:
         input_ids, mask_ids, answer_ids = self.get_token_ids(X, y)
 
         batch_size = 8
-        
         total_loss = 0.0
 
         for i in tqdm(range(0, len(X), 8)):
@@ -273,6 +272,7 @@ class Experiment:
             print(logits.shape)
 
             vocab_size = logprob.shape[2]
+            print(vocab_size)
             mask_ids = mask_ids.view(my_batch_size, 1, 1)
             mask_ids = mask_ids.expand([my_batch_size, 1, vocab_size])
 
@@ -289,15 +289,15 @@ class Experiment:
                 [self.tokenizer.decode(sorted_indices[j, l]).lower().strip() for l in range(10)]
                 for j in range(my_batch_size)
             ]
-
+            """
             for b in range(8):
                 print(batch_x[b])
                 print(batch_top_10_tokens[b])
-                print(batch_y[b])
+                print(batch_y[b])"""
 
 
 
-
+        """
         for idx, (question, answer) in enumerate(zip(X, y)):
             input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
@@ -316,15 +316,16 @@ class Experiment:
                 # Calculate loss over the entire sequence
                 loss = self.loss_fn(logits, gold_answer_token_ids_tensor)
                 total_loss += loss.item()
-                print(loss)
+                #print(loss)
 
                 predictions = logits.argmax(dim=-1)
-                print(predictions)
+                #print(predictions)
 
                 # Decode the predictions and gold answers
                 predicted_text = self.tokenizer.decode(predictions[0], skip_special_tokens=True)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
-
+                
+                
                 if idx < 5:  # Print only for the first 20 datapoints
                     print(f"Question: {question}")
                     print(f"Predicted Answer: {predicted_text}")
@@ -335,9 +336,12 @@ class Experiment:
                 total_predictions += gold_answer_token_ids_tensor.size(-1)
 
             avg_loss = total_loss / len(X)
-            accuracy = correct_predictions / len(X)
+            accuracy = correct_predictions / len(X)"""
 
         model.train()  # return model to train mode
+
+        avg_loss = 0
+        accuracy = 0
 
         return avg_loss, accuracy
     
