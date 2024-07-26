@@ -207,6 +207,8 @@ class Experiment:
         self.load_dataset()
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
+        print(torch.cuda.memory_summary(device=None, abbreviated=False))
+
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
         print(f"Original Loss: {original_loss}")
@@ -220,7 +222,7 @@ class Experiment:
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
-
+            print(torch.cuda.memory_summary(device=None, abbreviated=False))
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
@@ -230,13 +232,19 @@ class Experiment:
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
 
-                    optimizer.zero_grad()
+                    optimizer.zero_grad()   
+                    print(torch.cuda.memory_summary(device=None, abbreviated=False))
                     
                     batch_losses = []
                     for question, answer in zip(X_batch, y_batch):
+                        torch.cuda.empty_cache()
+                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
                         input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
                         outputs = self.edited_model(input_ids_tensor)
+                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
                         logits = outputs.logits
+                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
                         loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
                         batch_losses.append(loss)
                         torch.cuda.empty_cache()
