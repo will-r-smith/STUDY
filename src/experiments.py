@@ -276,6 +276,8 @@ class Experiment:
             mask_ids = mask_ids.view(my_batch_size, 1, 1)
             mask_ids = mask_ids.expand([my_batch_size, 1, vocab_size])
 
+            print(batch_x)
+
             print(mask_ids)
 
             predicted_logprob = torch.gather(logprob, index=mask_ids, dim=1)     # batch size x 1 x vocab_size
