@@ -266,7 +266,7 @@ class Experiment:
             print(loss)
 
             top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
-            top1_predictions = top_tokens[0]
+            top1_predictions = top_tokens[0,:]
             total_top1_correct += (top1_predictions == labels).sum().item()
 
             # Calculate top-10 accuracy
