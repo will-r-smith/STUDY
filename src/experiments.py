@@ -269,6 +269,9 @@ class Experiment:
                 logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
+            print(logprob.size())
+            print(logits.size())
+
             vocab_size = logprob.shape[2]
             mask_ids = mask_ids.view(my_batch_size, 1, 1)
             mask_ids = mask_ids.expand([my_batch_size, 1, vocab_size])
