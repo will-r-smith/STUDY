@@ -124,7 +124,7 @@ class Experiment:
 
         with torch.no_grad():
             for question, answer in zip(X, y):
-                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=128).to(self.device)
+                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=64).to(self.device)
 
                 input_ids_list.append(inputs.input_ids)
                 attention_mask_list.append(inputs.attention_mask)
@@ -246,11 +246,9 @@ class Experiment:
                     input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
 
                     torch.cuda.empty_cache()
-                    model = self.edited_model
-                    torch.cuda.empty_cache()
-                    outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
+                    outputs = self.edited_model(input_ids_tensor, attention_mask=attention_mask_tensor)
                     logits = outputs.logits
-
+                    torch.cuda.empty_cache()
                     batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
 
                     print(f"Batch Loss:{batch_loss.item()}")
