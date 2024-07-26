@@ -117,34 +117,26 @@ class Experiment:
     def save_results(self):
         pass
 
-
     def get_token_ids(self, X, y):
-
-        # Initialize lists to store tokenized questions and numerical answers
         input_ids_list = []
+        attention_mask_list = []
         gold_answer_token_ids_list = []
-        
+
         with torch.no_grad():
             for question, answer in zip(X, y):
-                # Tokenize the question
                 inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
                 input_ids_list.append(inputs.input_ids)
+                attention_mask_list.append(inputs.attention_mask)
 
-                # Tokenize the answer
                 gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
-                
-                #answer_len = len(gold_answer_token_ids)
-                #assert answer_len == 1, f"For this special case, we assume the answer has 1 token. Found {gold_answer_token_ids}."
-                
                 gold_answer_token_id = int(gold_answer_token_ids[0])
                 gold_answer_token_ids_list.append(gold_answer_token_id)
 
-
         input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
+        attention_mask_tensor = torch.cat(attention_mask_list, dim=0).to(self.device)
         gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
 
-        return input_ids_tensor, gold_answer_token_ids_tensor
-    
+        return input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor
 
 
     def evaluate(self, model, X, y):
@@ -154,11 +146,11 @@ class Experiment:
         correct_predictions = 0
 
         for question, answer in zip(X, y):
-            input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+            input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
             with torch.no_grad():
                 torch.cuda.empty_cache()
-                outputs = model(input_ids_tensor)
+                outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
                 logits = outputs.logits
 
                 loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
@@ -252,11 +244,11 @@ class Experiment:
 
                     print(X_batch)
 
-                    input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
+                    input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
 
                     torch.cuda.empty_cache()
                     model = self.edited_model
-                    outputs = model(input_ids_tensor)
+                    outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
                     logits = outputs.logits
 
                     batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
