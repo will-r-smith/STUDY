@@ -157,6 +157,8 @@ class Experiment:
             with torch.no_grad():
                 torch.cuda.empty_cache()
                 outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
+                print(input_ids_tensor)
+                print(outputs[0])
                 logits = outputs.logits
 
                 print(logits)
