@@ -149,6 +149,7 @@ class Experiment:
 
         total_loss = 0
         correct_predictions = 0
+        total_predictions = 0
 
         for idx, (question, answer) in enumerate(zip(X, y)):
             input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
