@@ -162,7 +162,7 @@ class Experiment:
                 logits = outputs.logits
 
                 loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-                total_loss += loss.item()
+                total_loss += loss
 
                 predictions = logits[:, -1, :].argmax(dim=-1)
                 correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
@@ -221,7 +221,7 @@ class Experiment:
 
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
-        print(f"Original Loss:{original_loss}")
+        print(f"Original Loss:{original_loss.item()}")
         print(f"Original Accuracy:{original_accuracy}")
 
         parameters = self.get_parameters()
@@ -253,7 +253,7 @@ class Experiment:
 
                     batch_loss, _ = self.evaluate(self.edited_model, X_batch, y_batch)
 
-                    print(f"Batch Loss:{batch_loss}")
+                    print(f"Batch Loss:{batch_loss.item()}")
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -267,7 +267,7 @@ class Experiment:
                 best_loss = 0
 
                 # Print some stuff
-                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {epoch_loss}, Original Loss: {original_loss}, Best Loss: {best_loss}")
+                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
                 # Write something to preserve the best model and return to this at the end
 
