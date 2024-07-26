@@ -127,7 +127,8 @@ class Experiment:
             for question, answer in zip(X, y):
                 
                 # Tokenize the question
-                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+                #inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+                inputs = self.tokenizer(question, return_tensors="pt").to(self.device)
                 input_ids_list.append(inputs.input_ids)
                 attention_mask_list.append(inputs.attention_mask)
 
@@ -151,7 +152,7 @@ class Experiment:
         correct_predictions = 0
 
         for idx, (question, answer) in enumerate(zip(X, y)):
-            
+
             input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
             with torch.no_grad():
