@@ -267,7 +267,7 @@ class Experiment:
             input_ids, mask_ids, answer_ids = self.get_token_ids(batch_x, batch_y)
 
             with torch.no_grad():
-                logits = model(**input_ids, attention_mask = input_ids.attention_mask).logits
+                logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
             vocab_size = logprob.shape[2]
