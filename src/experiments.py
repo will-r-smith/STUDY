@@ -288,6 +288,7 @@ class Experiment:
 
             # Print or store the top 10 decoded tokens
             for idx, tokens in enumerate(decoded_top_tokens):
+                print(batch_x[idx])
                 print(f"Answer: {self.tokenizer.decode(answer_ids[idx,0])}")
                 print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
 
