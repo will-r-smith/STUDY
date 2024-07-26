@@ -118,23 +118,23 @@ class Experiment:
         pass
 
 
-def get_token_ids(self, X, y):
-    input_ids_list = []
-    gold_answer_token_ids_list = []
-    
-    with torch.no_grad():
-        for question, answer in zip(X, y):
-            inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
-            input_ids_list.append(inputs.input_ids)
+    def get_token_ids(self, X, y):
+        input_ids_list = []
+        gold_answer_token_ids_list = []
+        
+        with torch.no_grad():
+            for question, answer in zip(X, y):
+                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+                input_ids_list.append(inputs.input_ids)
 
-            gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
-            gold_answer_token_id = int(gold_answer_token_ids[0])
-            gold_answer_token_ids_list.append(gold_answer_token_id)
+                gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
+                gold_answer_token_id = int(gold_answer_token_ids[0])
+                gold_answer_token_ids_list.append(gold_answer_token_id)
 
-    input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
-    gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
+        input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
+        gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
 
-    return input_ids_tensor, gold_answer_token_ids_tensor
+        return input_ids_tensor, gold_answer_token_ids_tensor
     
 
 
