@@ -142,23 +142,48 @@ class Experiment:
 
     def evaluate(self, model, X, y):
         model.eval()  # set model to evaluation mode
-        
+
         total_loss = 0
         correct_predictions = 0
 
-        for question, answer in zip(X, y):
-            input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+        for idx, (question, answer) in enumerate(zip(X, y)):
+            if idx < 20:
+                input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
-            with torch.no_grad():
-                torch.cuda.empty_cache()
-                outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
-                logits = outputs.logits
+                with torch.no_grad():
+                    torch.cuda.empty_cache()
+                    outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
+                    logits = outputs.logits
 
-                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-                total_loss += loss
+                    loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                    total_loss += loss
 
-                predictions = logits[:, -1, :].argmax(dim=-1)
-                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+                    predictions = logits[:, -1, :].argmax(dim=-1)
+
+                    # Decode the predictions and gold answers
+                    predicted_text = self.tokenizer.decode(predictions[0])
+                    gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0])
+
+                    print(f"Question: {question}")
+                    print(f"Predicted Answer: {predicted_text}")
+                    print(f"Gold Answer: {gold_answer_text}\n")
+
+                    correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+            else:
+                # For the remaining data points, perform the evaluation without detailed printing
+                input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+
+                with torch.no_grad():
+                    torch.cuda.empty_cache()
+                    outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
+                    logits = outputs.logits
+
+                    loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                    total_loss += loss
+
+                    predictions = logits[:, -1, :].argmax(dim=-1)
+
+                    correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
 
         avg_loss = total_loss / len(X)
         accuracy = correct_predictions / len(X)
