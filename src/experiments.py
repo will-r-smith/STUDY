@@ -228,7 +228,6 @@ class Experiment:
 
     def get_token_ids(self, X, y):
 
-
         input_ids = self.tokenizer(X, return_tensors="pt", padding="longest").to(self.device)
 
         mask_token_id = self.tokenizer.convert_tokens_to_ids('<mask>')
