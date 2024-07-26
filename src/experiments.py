@@ -221,7 +221,7 @@ class Experiment:
 
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
-        print(f"Original Loss:{original_loss.item()}")
+        print(f"Original Loss:{original_loss}")
         print(f"Original Accuracy:{original_accuracy}")
 
         parameters = self.get_parameters()
