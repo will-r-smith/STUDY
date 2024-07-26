@@ -118,51 +118,6 @@ class Experiment:
         pass
 
 
-    def get_token_ids(self, X, y):
-        input_ids_list = []
-        gold_answer_token_ids_list = []
-        
-        with torch.no_grad():
-            for question, answer in zip(X, y):
-                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
-                input_ids_list.append(inputs.input_ids)
-
-                gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
-                gold_answer_token_id = int(gold_answer_token_ids[0])
-                gold_answer_token_ids_list.append(gold_answer_token_id)
-
-        input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
-        gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
-
-        return input_ids_tensor, gold_answer_token_ids_tensor
-    
-
-
-    def evaluate(self, model, X, y):
-        model.eval()  # set model to evaluation mode
-        
-        total_loss = 0
-        correct_predictions = 0
-
-        for question, answer in zip(X, y):
-            input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
-
-            with torch.no_grad():
-                outputs = model(input_ids_tensor)
-                logits = outputs.logits
-
-                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-                total_loss += loss.item()
-
-                predictions = logits[:, -1, :].argmax(dim=-1)
-                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
-
-        avg_loss = total_loss / len(X)
-        accuracy = correct_predictions / len(X)
-
-        model.train()  # return model to train mode
-
-        return avg_loss, accuracy
 
 
 
@@ -199,64 +154,102 @@ class Experiment:
             #self.save_results()
 
 
+    def get_token_ids(self, question, answer):
+        inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+        input_ids = inputs.input_ids
 
+        gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
+        gold_answer_token_id = int(gold_answer_token_ids[0])
 
-    def fine_tune(self):
+        return input_ids, gold_answer_token_id
+
+    def evaluate(self, model, X, y):
+        model.eval()
+        
+        total_loss = 0.0
+        correct_predictions = 0
+
+        for question, answer in zip(X, y):
+            input_ids_tensor, gold_answer_token_id = self.get_token_ids(question, answer)
+            gold_answer_token_id = torch.tensor([gold_answer_token_id]).to(self.device)
+
+            with torch.no_grad():
+                outputs = model(input_ids_tensor)
+                logits = outputs.logits
+
+                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_id)
+                total_loss += loss.item()
+
+                predictions = logits[:, -1, :].argmax(dim=-1)
+                correct_predictions += (predictions == gold_answer_token_id).sum().item()
+
+            torch.cuda.empty_cache()
+
+        avg_loss = total_loss / len(X)
+        accuracy = correct_predictions / len(X)
+
+        model.train()
+
+        return avg_loss, accuracy
+
+    def fine_tune(self, X_train, y_train, X_val, y_val, args):
         torch.cuda.empty_cache()
-
         self.load_dataset()
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
         print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
-        original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
+        original_loss, original_accuracy = self.evaluate(self.model, self.X, self.y)
 
         print(f"Original Loss: {original_loss}")
         print(f"Original Accuracy: {original_accuracy}")
 
         parameters = self.get_parameters()
 
+        scaler = GradScaler()  # For mixed precision
+
         for name, param in parameters:
             print(name)
-            self.edited_model = deepcopy(self.original_model)
+            self.edited_model = deepcopy(self.model)
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
-            optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
+            optimizer = torch.optim.Adam(self.trainable_parameters, lr=args.learning_rate)
+
             print(torch.cuda.memory_summary(device=None, abbreviated=False))
-            for epoch in range(self.args.num_epochs):
+
+            for epoch in range(args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
-                for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
-                    my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
+                optimizer.zero_grad()
+
+                for i in tqdm(range(0, len(self.X_train), args.batch_size)):
+                    my_batch_size = min(args.batch_size, len(self.X_train) - i)
 
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
 
-                    optimizer.zero_grad()   
-                    print(torch.cuda.memory_summary(device=None, abbreviated=False))
-                    
-                    batch_losses = []
+                    batch_loss = 0.0
+
                     for question, answer in zip(X_batch, y_batch):
                         torch.cuda.empty_cache()
-                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
-                        input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
-                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
-                        outputs = self.edited_model(input_ids_tensor)
-                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
-                        logits = outputs.logits
-                        print(torch.cuda.memory_summary(device=None, abbreviated=False))
-                        loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-                        batch_losses.append(loss)
-                        torch.cuda.empty_cache()
 
-                    batch_loss = torch.stack(batch_losses).mean()
+                        input_ids_tensor, gold_answer_token_id = self.get_token_ids(question, answer)
+                        gold_answer_token_id = torch.tensor([gold_answer_token_id]).to(self.device)
+
+                        with autocast():  # Mixed precision
+                            outputs = self.edited_model(input_ids_tensor)
+                            logits = outputs.logits
+                            loss = self.loss_fn(logits[:, -1, :], gold_answer_token_id)
+
+                        batch_loss += loss
+
+                    batch_loss = batch_loss / args.batch_size
                     print(f"Batch Loss: {batch_loss.item()}")
 
-                    batch_loss.backward()
-                    optimizer.step()
+                    scaler.scale(batch_loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
 
-                    print(self.trainable_parameters[0].data[:5, :5])
-                    
                     torch.cuda.empty_cache()
 
                 epoch_loss, epoch_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
@@ -264,6 +257,6 @@ class Experiment:
                 best_loss = 0
 
                 print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, "
-                    f"Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
+                      f"Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
             final_loss, final_accuracy = self.evaluate(self.edited_model, self.X, self.y)
