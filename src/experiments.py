@@ -125,7 +125,8 @@ class Experiment:
 
         with torch.no_grad():
             for question, answer in zip(X, y):
-                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=64).to(self.device)
+                #inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=64).to(self.device)
+                inputs = self.tokenizer(question, return_tensors="pt").to(self.device)
                 #stripped_answer = answer.strip()
                 
 
