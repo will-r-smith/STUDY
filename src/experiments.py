@@ -118,55 +118,51 @@ class Experiment:
         pass
 
 
-    def get_token_ids(self, X, y):
+def get_token_ids(self, X, y):
+    input_ids_list = []
+    gold_answer_token_ids_list = []
+    
+    with torch.no_grad():
+        for question, answer in zip(X, y):
+            inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+            input_ids_list.append(inputs.input_ids)
 
-        # Initialize lists to store tokenized questions and numerical answers
-        input_ids_list = []
-        gold_answer_token_ids_list = []
-        
-        with torch.no_grad():
-            for question, answer in zip(X, y):
-                # Tokenize the question
-                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
-                input_ids_list.append(inputs.input_ids)
+            gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
+            gold_answer_token_id = int(gold_answer_token_ids[0])
+            gold_answer_token_ids_list.append(gold_answer_token_id)
 
-                # Tokenize the answer
-                gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
-                
-                #answer_len = len(gold_answer_token_ids)
-                #assert answer_len == 1, f"For this special case, we assume the answer has 1 token. Found {gold_answer_token_ids}."
-                
-                gold_answer_token_id = int(gold_answer_token_ids[0])
-                gold_answer_token_ids_list.append(gold_answer_token_id)
+    input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
+    gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
 
-
-        input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
-        gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
-
-        return input_ids_tensor, gold_answer_token_ids_tensor
+    return input_ids_tensor, gold_answer_token_ids_tensor
     
 
 
     def evaluate(self, model, X, y):
-
-        model.eval() # set model to evaluation mode
+        model.eval()  # set model to evaluation mode
         
-        input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X, y)
+        total_loss = 0
+        correct_predictions = 0
 
-        outputs = self.edited_model(input_ids_tensor)
-        logits = outputs.logits
+        for question, answer in zip(X, y):
+            input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
-        loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-        
+            with torch.no_grad():
+                outputs = model(input_ids_tensor)
+                logits = outputs.logits
 
-        # Calculate accuracy
-        predictions = logits[:, -1, :].argmax(dim=-1)
-        correct_predictions = (predictions == gold_answer_token_ids_tensor).sum().item()
+                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                total_loss += loss.item()
+
+                predictions = logits[:, -1, :].argmax(dim=-1)
+                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+
+        avg_loss = total_loss / len(X)
         accuracy = correct_predictions / len(X)
 
-        model.train() # return model to train mode
+        model.train()  # return model to train mode
 
-        return loss, accuracy
+        return avg_loss, accuracy
 
 
 
@@ -206,34 +202,24 @@ class Experiment:
 
 
     def fine_tune(self):
-
         torch.cuda.empty_cache()
 
         self.load_dataset()
-
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
-        print(f"Original Loss:{original_loss.item()}")
-        print(f"Original Accuracy:{original_accuracy}")
+        print(f"Original Loss: {original_loss}")
+        print(f"Original Accuracy: {original_accuracy}")
 
         parameters = self.get_parameters()
 
         for name, param in parameters:
             print(name)
             self.edited_model = deepcopy(self.original_model)
-
-
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
-
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
-            
-
-
-            print(self.trainable_parameters[0].data[:5, :5])
-
 
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
@@ -246,7 +232,7 @@ class Experiment:
 
                     batch_loss, _ = self.evaluate(self.edited_model, X_batch, y_batch)
 
-                    print(f"Batch Loss:{batch_loss.item()}")
+                    print(f"Batch Loss: {batch_loss}")
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -260,18 +246,10 @@ class Experiment:
 
                 best_loss = 0
 
-                # Print some stuff
-                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
-
-                # Write something to preserve the best model and return to this at the end
+                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, "
+                    f"Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
             final_loss, final_accuracy = self.evaluate(self.edited_model, self.X, self.y)
 
-            
-                    
 
-
-
-
-
-    
+        
