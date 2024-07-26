@@ -268,7 +268,7 @@ class Experiment:
             top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
             print(top_tokens)
             
-            top1_predictions = top_tokens[:,0,:]
+            top1_predictions = top_tokens[:,0,0]
             print(top1_predictions)
             print(labels)
 
