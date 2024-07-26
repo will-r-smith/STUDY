@@ -231,7 +231,7 @@ class Experiment:
         input_ids = self.tokenizer(X, return_tensors="pt", padding="longest").to(self.device)
 
         mask_token_id = self.tokenizer.convert_tokens_to_ids('<mask>')
-        mask_ids = (input_ids["input_ids"] == mask_token_id).float().argmax(dim=1)
+        mask_ids = (input_ids["input_ids"] == mask_token_id).nonzero(as_tuple=True)[1]
 
         answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
 
@@ -268,7 +268,7 @@ class Experiment:
                 logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
-            mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
+            mask_positions = (input_ids["input_ids"] == self.tokenizer.mask_token_id).nonzero(as_tuple=True)
             masked_logits = logits[mask_positions]
             masked_labels = answer_ids[mask_positions]
             loss = torch.nn.CrossEntropyLoss(masked_logits, masked_labels)
