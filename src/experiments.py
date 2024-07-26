@@ -252,16 +252,15 @@ class Experiment:
                 logprob = torch.log_softmax(logits, dim=2)
 
             vocab_size = logprob.shape[2]
-            mask_token_ids = mask_ids.view(my_batch_size, 1, 1)
-            mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
-            predicted_logprob = torch.gather(logits, index=mask_token_ids, dim=1)
+            mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, vocab_size])
+            #mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
+            masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
-
-            loss = torch.nn.CrossEntropyLoss()(predicted_logprob[:,-1,:], answer_ids[:,0])
+            loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids[:,0])
 
             print(loss)
 
-            top_tokens = torch.topk(predicted_logprob, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
+            top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
             decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
 
             # Print or store the top 10 decoded tokens
@@ -269,37 +268,6 @@ class Experiment:
                 print(batch_x[idx])
                 print(f"Answer: {self.tokenizer.decode(answer_ids[idx,0])}")
                 print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
-
-
-            vocab_size = logprob.shape[2]
-            #print(vocab_size)
-            mask_ids = mask_ids.view(my_batch_size, 1, 1)
-            mask_ids = mask_ids.expand([my_batch_size, 1, vocab_size])
-
-            #print(batch_x)
-
-            #print(mask_ids)
-            #print(mask_ids.shape)
-
-            predicted_logprob = torch.gather(logprob, index=mask_ids, dim=1)     # batch size x 1 x vocab_size
-            predicted_logprob = predicted_logprob[:, 0, :]                             # batch x vocab_size
-
-            # Generate top-k tokens
-            sorted_logprob, sorted_indices = torch.sort(predicted_logprob, descending=True)    # both are batch x vocab_size
-            sorted_logprob = sorted_logprob[:, :10].detach().cpu().numpy()                    # batch x k
-            sorted_indices = sorted_indices[:, :10].detach().cpu().numpy()                    # batch x k
-
-            # Compute top-k accuracy
-            batch_top_10_tokens = [
-                [self.tokenizer.decode(sorted_indices[j, l]).lower().strip() for l in range(10)]
-                for j in range(my_batch_size)
-            ]
-            """
-            for b in range(8):
-                print(batch_x[b])
-                print(batch_top_10_tokens[b])
-                print(batch_y[b])"""
-
 
 
         """
