@@ -8,7 +8,7 @@ import importlib
 from transformers import AutoTokenizer
 
 from src.matrix_utils import norms, do_lr, do_mm
-
+from torch.cuda.amp import autocast, GradScaler
 
 class Experiment:
 
@@ -118,6 +118,51 @@ class Experiment:
         pass
 
 
+    def get_token_ids(self, X, y):
+        input_ids_list = []
+        gold_answer_token_ids_list = []
+        
+        with torch.no_grad():
+            for question, answer in zip(X, y):
+                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+                input_ids_list.append(inputs.input_ids)
+
+                gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
+                gold_answer_token_id = int(gold_answer_token_ids[0])
+                gold_answer_token_ids_list.append(gold_answer_token_id)
+
+        input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
+        gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
+
+        return input_ids_tensor, gold_answer_token_ids_tensor
+    
+
+
+    def evaluate(self, model, X, y):
+        model.eval()  # set model to evaluation mode
+        
+        total_loss = 0
+        correct_predictions = 0
+
+        for question, answer in zip(X, y):
+            input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+
+            with torch.no_grad():
+                outputs = model(input_ids_tensor)
+                logits = outputs.logits
+
+                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                total_loss += loss.item()
+
+                predictions = logits[:, -1, :].argmax(dim=-1)
+                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+
+        avg_loss = total_loss / len(X)
+        accuracy = correct_predictions / len(X)
+
+        model.train()  # return model to train mode
+
+        return avg_loss, accuracy
 
 
 
@@ -154,45 +199,8 @@ class Experiment:
             #self.save_results()
 
 
-    def get_token_ids(self, question, answer):
-        inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
-        input_ids = inputs.input_ids
 
-        gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
-        gold_answer_token_id = int(gold_answer_token_ids[0])
-
-        return input_ids, gold_answer_token_id
-
-    def evaluate(self, model, X, y):
-        model.eval()
-        
-        total_loss = 0.0
-        correct_predictions = 0
-
-        for question, answer in zip(X, y):
-            input_ids_tensor, gold_answer_token_id = self.get_token_ids(question, answer)
-            gold_answer_token_id = torch.tensor([gold_answer_token_id]).to(self.device)
-
-            with torch.no_grad():
-                outputs = model(input_ids_tensor)
-                logits = outputs.logits
-
-                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_id)
-                total_loss += loss.item()
-
-                predictions = logits[:, -1, :].argmax(dim=-1)
-                correct_predictions += (predictions == gold_answer_token_id).sum().item()
-
-            torch.cuda.empty_cache()
-
-        avg_loss = total_loss / len(X)
-        accuracy = correct_predictions / len(X)
-
-        model.train()
-
-        return avg_loss, accuracy
-
-    def fine_tune(self, X_train, y_train, X_val, y_val, args):
+    def fine_tune(self):
         torch.cuda.empty_cache()
         self.load_dataset()
         self.loss_fn = torch.nn.CrossEntropyLoss()
