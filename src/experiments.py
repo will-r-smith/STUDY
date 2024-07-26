@@ -145,18 +145,20 @@ class Experiment:
         correct_predictions = 0
 
         for question, answer in zip(X, y):
-            input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+            input_ids_tensor, gold_answer_token_id = self.get_token_ids(question, answer)
             gold_answer_token_id = torch.tensor([gold_answer_token_id], dtype=torch.long).to(self.device)
 
             with torch.no_grad():
                 outputs = model(input_ids_tensor)
                 logits = outputs.logits
 
-                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_id)
                 total_loss += loss.item()
 
                 predictions = logits[:, -1, :].argmax(dim=-1)
-                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+                correct_predictions += (predictions == gold_answer_token_id).sum().item()
+
+            torch.cuda.empty_cache()
 
         avg_loss = total_loss / len(X)
         accuracy = correct_predictions / len(X)
