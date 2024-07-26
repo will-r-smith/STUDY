@@ -126,16 +126,16 @@ class Experiment:
         with torch.no_grad():
             for question, answer in zip(X, y):
                 inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=64).to(self.device)
-                stripped_answer = answer.strip()
+                #stripped_answer = answer.strip()
                 
 
                 input_ids_list.append(inputs.input_ids)
                 attention_mask_list.append(inputs.attention_mask)
 
-                gold_answer_token_ids = self.tokenizer(stripped_answer)["input_ids"]
+                gold_answer_token_ids = self.tokenizer(answer, return_tensors="pt", add_special_tokens=False).input_ids
                 #print(gold_answer_token_ids)
                 #gold_answer_token_id = int(gold_answer_token_ids[1])
-                gold_answer_token_ids_list.append([gold_answer_token_ids])
+                gold_answer_token_ids_list.append(gold_answer_token_ids)
 
         input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
         attention_mask_tensor = torch.cat(attention_mask_list, dim=0).to(self.device)
@@ -158,24 +158,30 @@ class Experiment:
                 outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
                 logits = outputs.logits
 
-                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-                total_loss += loss
+                # Align logits with gold_answer_token_ids_tensor shape
+                logits = logits[:, -gold_answer_token_ids_tensor.size(1):, :]
 
-                predictions = logits[:, -1, :].argmax(dim=-1)
+                # Calculate loss over the entire sequence
+                loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
+                total_loss += loss.item()
+
+                predictions = logits.argmax(dim=-1)
 
                 # Decode the predictions and gold answers
-                predicted_text = self.tokenizer.decode(predictions[1])
-                gold_answer_text = self.tokenizer.decode([gold_answer_token_ids_tensor[0]])
+                predicted_text = self.tokenizer.decode(predictions[0], skip_special_tokens=True)
+                gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
 
                 if idx < 20:  # Print only for the first 20 datapoints
                     print(f"Question: {question}")
                     print(f"Predicted Answer: {predicted_text}")
-                    print(f"Gold Answer: {gold_answer_text}\n")
+                    print(f"Gold Answer: {gold_answer_text}")
+                    print(f"Original Answer: {answer}\n")
 
                 correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+                total_predictions += gold_answer_token_ids_tensor.size(1)
 
-        avg_loss = total_loss / len(X)
-        accuracy = correct_predictions / len(X)
+            avg_loss = total_loss / len(X)
+            accuracy = correct_predictions / len(X)
 
         model.train()  # return model to train mode
 
