@@ -292,7 +292,7 @@ class Experiment:
                 print(batch_x[idx])
                 print(f"Answer: {self.tokenizer.decode(answer_ids[idx,0])}")
                 print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
-                print(top10_correct[idx])
+                print(top10_correct)
 
             #"""
 
