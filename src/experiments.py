@@ -133,7 +133,7 @@ class Experiment:
                 attention_mask_list.append(inputs.attention_mask)
 
                 # Tokenize the answer
-                gold_answer_token_ids = self.tokenizer(answer).input_ids
+                gold_answer_token_ids = self.tokenizer(answer.strip())["input_ids"]
 
                 # Use the first token of the gold answer for comparison
                 gold_answer_token_id = int(gold_answer_token_ids[0])
