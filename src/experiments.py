@@ -164,7 +164,7 @@ class Experiment:
                 print(logits.size())
                 print(gold_answer_token_ids_tensor.size())
 
-                print(logits[0, 10:, :10])
+                print(logits[0, 64, :10])
 
                 # Align logits with gold_answer_token_ids_tensor shape
                 logits = logits[:, -1, :]
@@ -179,6 +179,7 @@ class Experiment:
                 print(predictions)
                 # Decode the predictions and gold answers
                 for p in predictions[0]:
+                    print(p)
                     predicted_text = self.tokenizer.decode(p, skip_special_tokens=True)
                     print(predicted_text)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
