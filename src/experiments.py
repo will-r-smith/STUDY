@@ -242,7 +242,7 @@ class Experiment:
 
         answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
 
-        return input_ids, mask_token_id, answer_ids
+        return input_ids, mask_ids, answer_ids
 
 
 
@@ -268,7 +268,7 @@ class Experiment:
                 logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
-            mask_positions = input_ids == mask_ids
+            mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
             masked_logits = logits[mask_positions]
             masked_labels = answer_ids[mask_positions]
             loss = torch.nn.CrossEntropyLoss(masked_logits, masked_labels)
