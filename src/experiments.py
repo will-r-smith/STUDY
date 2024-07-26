@@ -250,7 +250,13 @@ class Experiment:
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
 
-                    batch_loss, _ = self.evaluate(self.edited_model, X_batch, y_batch)
+                    input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
+
+                    torch.cuda.empty_cache()
+                    outputs = self.edited_model(input_ids_tensor)
+                    logits = outputs.logits
+
+                    batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
 
                     print(f"Batch Loss:{batch_loss.item()}")
 
