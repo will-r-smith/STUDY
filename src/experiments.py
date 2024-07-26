@@ -269,8 +269,8 @@ class Experiment:
                 logprob = torch.log_softmax(logits, dim=2)
 
             mask_positions = (input_ids["input_ids"] == self.tokenizer.mask_token_id).nonzero(as_tuple=True)
-            masked_logits = logits[mask_positions]
-            masked_labels = answer_ids[mask_positions]
+            masked_logits = logits[:,-1,:]
+            masked_labels = answer_ids[:,-1,:]
             loss = torch.nn.CrossEntropyLoss(masked_logits, masked_labels)
 
             print(loss)
