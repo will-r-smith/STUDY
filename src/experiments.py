@@ -73,13 +73,11 @@ class Experiment:
         module = importlib.import_module(f"src.data_utils.{self.args.dataset}")
         load_dataset = getattr(module, 'load_dataset')
 
-
         self.X, self.y = load_dataset(self)
 
         print("loaded dataset")
 
         if self.args.test == "fine_tune":
-
             self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X, self.y, test_size=0.2, random_state=42, shuffle=True)
 
         self.dataset_size = len(self.X)
@@ -152,9 +150,6 @@ class Experiment:
 
             loss, accuracy = self.evaluate()
 
-            #self.save_results()
-
-
 
 
     def fine_tune(self):
@@ -167,13 +162,9 @@ class Experiment:
 
         original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
-        #print(f"Original Loss:{original_loss.item()}")
-        #print(f"Original Accuracy:{original_accuracy}")
-
         parameters = self.get_parameters()
 
         for name, param in parameters:
-            #print(name)
             self.edited_model = deepcopy(self.original_model)
 
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
@@ -183,8 +174,6 @@ class Experiment:
                 param.requires_grad = True
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
-
-            # print(self.trainable_parameters[0].data[:5, :5])
 
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
@@ -204,7 +193,6 @@ class Experiment:
                     torch.cuda.empty_cache()
                     batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
 
-                    #print(f"Batch Loss:{batch_loss.item()}")
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -216,7 +204,6 @@ class Experiment:
 
                 best_loss = 0
 
-                # Print some stuff
                 #print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
                 # Write something to preserve the best model and return to this at the end
@@ -237,7 +224,6 @@ class Experiment:
 
         answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in answers]
 
-        #answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
         answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
         return input_ids, mask_ids, answer_ids
 
@@ -268,16 +254,8 @@ class Experiment:
             vocab_size = logprob.shape[2]
             mask_token_ids = mask_ids.view(my_batch_size, 1, 1)
             mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
-            predicted_logprob = torch.gather(logprob, index=mask_token_ids, dim=1)
+            predicted_logprob = torch.gather(logits, index=mask_token_ids, dim=1)
 
-            print(predicted_logprob[:,-1,:].shape)
-
-            print(answer_ids.shape)
-
-            #mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
-            #masked_logits = logits[mask_positions]
-            #masked_labels = answer_ids[mask_positions]
-            #masked_labels = answer_ids[mask_ids[0]]
 
             loss = torch.nn.CrossEntropyLoss()(predicted_logprob[:,-1,:], answer_ids[:,0])
 
@@ -292,12 +270,6 @@ class Experiment:
                 print(f"Answer: {self.tokenizer.decode(answer_ids[idx,0])}")
                 print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
 
-
-
-
-
-            #print(logprob.shape)
-            #print(logits.shape)
 
             vocab_size = logprob.shape[2]
             #print(vocab_size)
