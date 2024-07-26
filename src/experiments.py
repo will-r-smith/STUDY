@@ -179,7 +179,7 @@ class Experiment:
                     print(f"Original Answer: {answer}\n")
 
                 correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
-                total_predictions += gold_answer_token_ids_tensor.size(1)
+                total_predictions += gold_answer_token_ids_tensor.size(-1)
 
             avg_loss = total_loss / len(X)
             accuracy = correct_predictions / len(X)
