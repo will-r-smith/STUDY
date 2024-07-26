@@ -248,6 +248,7 @@ class Experiment:
 
                     torch.cuda.empty_cache()
                     model = self.edited_model
+                    torch.cuda.empty_cache()
                     outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
                     logits = outputs.logits
 
