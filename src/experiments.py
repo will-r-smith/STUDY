@@ -160,14 +160,13 @@ class Experiment:
                 logits = outputs.logits
 
                 # Align logits with gold_answer_token_ids_tensor shape
-                #logits = logits#[:, -1, :]
+                logits = logits[:, :gold_answer_token_ids_tensor.size(1), :]
 
                 # Calculate loss over the entire sequence
-                loss = self.loss_fn(logits, gold_answer_token_ids_tensor)
+                loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
                 total_loss += loss.item()
 
                 predictions = logits.argmax(dim=-1)
-
                 # Decode the predictions and gold answers
                 predicted_text = self.tokenizer.decode(predictions, skip_special_tokens=True)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
