@@ -273,7 +273,7 @@ class Experiment:
             mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
             predicted_logprob = torch.gather(logprob, index=mask_token_ids, dim=1)
 
-            print(predicted_logprob.shape)
+            print(predicted_logprob[:,-1,:].shape)
 
             #mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
             #masked_logits = logits[mask_positions]
