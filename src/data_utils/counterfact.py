@@ -26,15 +26,11 @@ def load_dataset(self):
     for i in range(len(dataset)):
         question, answer = dataset[i]
 
-        print(question)
-        print(answer)
-
         if question.endswith(" "):
             question = f"{question}<mask>."
         else:
             question = f"{question} <mask>."
 
-        print(question)
 
         X.append(question)
         y.append(answer)
