@@ -231,7 +231,7 @@ class Experiment:
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
 
-            print(self.trainable_parameters[0].data[:5, :5])
+            #print(self.trainable_parameters[0].data[:5, :5])
 
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
@@ -242,8 +242,6 @@ class Experiment:
                     torch.cuda.empty_cache()
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
-
-                    print(X_batch)
 
                     input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
 
@@ -261,7 +259,7 @@ class Experiment:
                     batch_loss.backward()
                     optimizer.step()
 
-                    print(self.trainable_parameters[0].data[:5, :5])
+                    #print(self.trainable_parameters[0].data[:5, :5])
 
                 epoch_loss, epoch_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
