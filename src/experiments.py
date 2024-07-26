@@ -153,6 +153,9 @@ class Experiment:
         correct_predictions = 0
         total_predictions = 0
 
+        for i in range(10):
+            print(f"Q:{X[i]}A:{[i]}")
+
         for idx, (question, answer) in enumerate(zip(X, y)):
             input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
