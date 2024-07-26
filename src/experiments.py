@@ -278,8 +278,9 @@ class Experiment:
             #mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
             #masked_logits = logits[mask_positions]
             #masked_labels = answer_ids[mask_positions]
-            loss = torch.nn.CrossEntropyLoss(predicted_logprob, answer_ids)
+            loss = torch.nn.CrossEntropyLoss()(predicted_logprob, answer_ids)
 
+            print(loss)
 
             top_tokens = torch.topk(predicted_logprob, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
             decoded_top_tokens = [self.tokenizer.decode(tokens) for tokens in top_tokens]
