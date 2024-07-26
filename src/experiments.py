@@ -240,7 +240,7 @@ class Experiment:
             id = self.tokenizer(answer)["input_ids"]
             answer_ids.append(id[1])
 
-        answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
+        #answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
 
         return input_ids, mask_ids, answer_ids
 
@@ -274,6 +274,8 @@ class Experiment:
             predicted_logprob = torch.gather(logprob, index=mask_token_ids, dim=1)
 
             print(predicted_logprob[:,-1,:].shape)
+
+            print(answer_ids.shape)
 
             #mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
             #masked_logits = logits[mask_positions]
