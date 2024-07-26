@@ -269,7 +269,7 @@ class Experiment:
                 logprob = torch.log_softmax(logits, dim=2)
 
             vocab_size = logprob.shape[2]
-            mask_token_ids = mask_token_ids.view(my_batch_size, 1, 1)
+            mask_token_ids = mask_ids.view(my_batch_size, 1, 1)
             mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
             predicted_logprob = torch.gather(logprob, index=mask_token_ids, dim=1)
 
