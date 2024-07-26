@@ -124,7 +124,8 @@ class Experiment:
 
         with torch.no_grad():
             for question, answer in zip(X, y):
-                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True).to(self.device)
+                inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=128).to(self.device)
+
                 input_ids_list.append(inputs.input_ids)
                 attention_mask_list.append(inputs.attention_mask)
 
