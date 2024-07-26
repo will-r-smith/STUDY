@@ -174,7 +174,7 @@ class Experiment:
                 print(gold_answer_token_ids_tensor)
                 print(predictions)
                 # Decode the predictions and gold answers
-                for p in range(len(predictions.item()[0])):
+                for p in predictions.item()[0]:
                     predicted_text = self.tokenizer.decode(p, skip_special_tokens=True)
                     print(predicted_text)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
