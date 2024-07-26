@@ -231,7 +231,7 @@ class Experiment:
         input_ids = self.tokenizer(X, return_tensors="pt", padding="longest").to(self.device)
 
         mask_token_id = self.tokenizer.convert_tokens_to_ids('<mask>')
-        mask_ids = (input_ids["input_ids"] == mask_token_id).nonzero(as_tuple=True)[1]
+        mask_ids = (input_ids["input_ids"] == mask_token_id).float().argmax(dim=1)
 
         answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
 
@@ -268,19 +268,22 @@ class Experiment:
                 logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
-            print(logits.shape)
+            vocab_size = logprob.shape[2]
+            mask_token_ids = mask_token_ids.view(my_batch_size, 1, 1)
+            mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
+            predicted_logprob = torch.gather(logprob, index=mask_token_ids, dim=1)
 
-            mask_positions = (input_ids["input_ids"] == self.tokenizer.mask_token_id).nonzero(as_tuple=True)
-            masked_logits = logits[:,-1,:]
+            print(predicted_logprob.shape)
 
-            loss = torch.nn.CrossEntropyLoss(masked_logits, answer_ids)
+            #mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
+            #masked_logits = logits[mask_positions]
+            #masked_labels = answer_ids[mask_positions]
+            loss = torch.nn.CrossEntropyLoss(predicted_logprob, answer_ids)
 
-            print(loss)
 
-            top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
+            top_tokens = torch.topk(predicted_logprob, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
             decoded_top_tokens = [self.tokenizer.decode(tokens) for tokens in top_tokens]
 
-            print(batch_y)
             print(decoded_top_tokens)
 
 
