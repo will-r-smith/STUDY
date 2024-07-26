@@ -278,7 +278,9 @@ class Experiment:
             #mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
             #masked_logits = logits[mask_positions]
             #masked_labels = answer_ids[mask_positions]
-            loss = torch.nn.CrossEntropyLoss()(predicted_logprob, answer_ids)
+            masked_labels = answer_ids[mask_ids[0]]
+
+            loss = torch.nn.CrossEntropyLoss()(predicted_logprob, masked_labels)
 
             print(loss)
 
