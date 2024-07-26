@@ -160,10 +160,10 @@ class Experiment:
                 logits = outputs.logits
 
                 # Align logits with gold_answer_token_ids_tensor shape
-                logits = logits[:, -1, :]
+                #logits = logits#[:, -1, :]
 
                 # Calculate loss over the entire sequence
-                loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
+                loss = self.loss_fn(logits, gold_answer_token_ids_tensor)
                 total_loss += loss.item()
 
                 predictions = logits.argmax(dim=-1)
@@ -172,7 +172,7 @@ class Experiment:
                 predicted_text = self.tokenizer.decode(predictions, skip_special_tokens=True)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
 
-                if idx < 20:  # Print only for the first 20 datapoints
+                if idx < 5:  # Print only for the first 20 datapoints
                     print(f"Question: {question}")
                     print(f"Predicted Answer: {predicted_text}")
                     print(f"Gold Answer: {gold_answer_text}")
