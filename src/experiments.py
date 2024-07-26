@@ -152,6 +152,7 @@ class Experiment:
 
 
 
+
     def fine_tune(self):
 
         torch.cuda.empty_cache()
@@ -162,6 +163,9 @@ class Experiment:
 
         orignal_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
+        print(orignal_loss)
+        print(original_top1_accuracy)
+        print(original_top10_accuracy)
 
         parameters = self.get_parameters()
 
@@ -176,7 +180,7 @@ class Experiment:
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
 
-            print(self.trainable_parameters[0].data[:5, :5])
+            print(self.trainable_parameters[0].data[:2, :2])
 
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
@@ -196,7 +200,7 @@ class Experiment:
                     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
                     batch_loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
-                    print(batch_loss)
+                    #print(batch_loss)
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -204,8 +208,8 @@ class Experiment:
 
                     torch.cuda.empty_cache()
 
-                    print(self.trainable_parameters[0].data[:5, :5])
-
+                    
+                print(self.trainable_parameters[0].data[:2, :2])
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
                 best_loss = 0
