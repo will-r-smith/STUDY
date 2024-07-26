@@ -239,6 +239,7 @@ class Experiment:
                         logits = outputs.logits
                         loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
                         batch_losses.append(loss)
+                        torch.cuda.empty_cache()
 
                     batch_loss = torch.stack(batch_losses).mean()
                     print(f"Batch Loss: {batch_loss.item()}")
