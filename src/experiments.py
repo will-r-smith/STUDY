@@ -207,7 +207,7 @@ class Experiment:
 
         print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
-        original_loss, original_accuracy = self.evaluate(self.edited_modelmodel, self.X, self.y)
+        original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
         print(f"Original Loss: {original_loss}")
         print(f"Original Accuracy: {original_accuracy}")
@@ -218,7 +218,7 @@ class Experiment:
 
         for name, param in parameters:
             print(name)
-            self.edited_model = deepcopy(self.model)
+            self.edited_model = deepcopy(self.original_model)
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
