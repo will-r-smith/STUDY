@@ -284,7 +284,7 @@ class Experiment:
             print(loss)
 
             top_tokens = torch.topk(predicted_logprob, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
-            decoded_top_tokens = [[self.tokenizer.decode([token]) for token in tokens] for tokens in top_tokens]
+            decoded_top_tokens = [[self.tokenizer.decode(int(token)) for token in tokens] for tokens in top_tokens]
 
             # Print or store the top 10 decoded tokens
             for idx, tokens in enumerate(decoded_top_tokens):
