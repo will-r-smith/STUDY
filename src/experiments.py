@@ -161,11 +161,10 @@ class Experiment:
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
-        original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X, self.y)
+        original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X_val, self.y_val)
 
-        print(original_loss)
-        print(original_top1_accuracy)
-        print(original_top10_accuracy)
+        print(f"Original Loss: {original_loss}, Original Top-1 Accuracy {original_top1_accuracy}, Original Top-1 Accuracy {original_top10_accuracy}")
+
 
         parameters = self.get_parameters()
 
@@ -173,6 +172,10 @@ class Experiment:
             self.edited_model = deepcopy(self.original_model)
 
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
+
+            edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
+
+            print(f"Edited Model Loss: {edited_loss}, Edited Model  Top-1 Accuracy {edited_top1_accuracy}, Edited Model  Top-1 Accuracy {edited_top10_accuracy}")
 
             # Ensure parameters have requires_grad=True
             for param in self.trainable_parameters:
