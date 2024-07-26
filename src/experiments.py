@@ -250,6 +250,8 @@ class Experiment:
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
 
+                    print(X_batch)
+
                     input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
 
                     torch.cuda.empty_cache()
