@@ -268,6 +268,8 @@ class Experiment:
                 logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
+            print(logits.shape)
+
             mask_positions = (input_ids["input_ids"] == self.tokenizer.mask_token_id).nonzero(as_tuple=True)
             masked_logits = logits[:,-1,:]
 
