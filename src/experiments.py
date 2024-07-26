@@ -288,9 +288,11 @@ class Experiment:
                 for j in range(my_batch_size)
             ]
 
-            print(batch_top_10_tokens)
+            for b in range(8):
+                print(batch_x[b])
+                print(batch_top_10_tokens[b])
+                print(batch_y[b])
 
-            print(y[answer])
 
 
 
