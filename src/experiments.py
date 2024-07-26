@@ -270,7 +270,7 @@ class Experiment:
             total_top1_correct += (top1_predictions == labels).sum().item()
 
             # Calculate top-10 accuracy
-            total_top10_correct += sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(batch_size)])
+            total_top10_correct += sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(len(labels))])
 
             
             decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
