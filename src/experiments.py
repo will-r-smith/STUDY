@@ -230,11 +230,19 @@ class Experiment:
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
 
-                    batch_loss, _ = self.evaluate(self.edited_model, X_batch, y_batch)
-
-                    print(f"Batch Loss: {batch_loss}")
-
                     optimizer.zero_grad()
+                    
+                    batch_losses = []
+                    for question, answer in zip(X_batch, y_batch):
+                        input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+                        outputs = self.edited_model(input_ids_tensor)
+                        logits = outputs.logits
+                        loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                        batch_losses.append(loss)
+
+                    batch_loss = torch.stack(batch_losses).mean()
+                    print(f"Batch Loss: {batch_loss.item()}")
+
                     batch_loss.backward()
                     optimizer.step()
 
@@ -250,6 +258,3 @@ class Experiment:
                     f"Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
             final_loss, final_accuracy = self.evaluate(self.edited_model, self.X, self.y)
-
-
-        
