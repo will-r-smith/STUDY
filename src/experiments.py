@@ -159,8 +159,10 @@ class Experiment:
                 outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
                 logits = outputs.logits
 
+                print(logits)
+
                 # Align logits with gold_answer_token_ids_tensor shape
-                logits = logits[:, :gold_answer_token_ids_tensor.size(1), :]
+                logits = logits[:, -1, :]
 
                 # Calculate loss over the entire sequence
                 loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
