@@ -157,11 +157,10 @@ class Experiment:
             with torch.no_grad():
                 torch.cuda.empty_cache()
                 outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
-                print(input_ids_tensor)
-                print(outputs[0])
+                
                 logits = outputs.logits
 
-                print(logits)
+                
 
                 # Align logits with gold_answer_token_ids_tensor shape
                 logits = logits[:, -1, :]
@@ -170,7 +169,9 @@ class Experiment:
                 loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
                 total_loss += loss.item()
 
-                predictions = logits.argmax(dim=-1)
+                predictions = logits.topk(3, dim=-1).indices
+                print(gold_answer_token_ids_tensor)
+                print(predictions)
                 # Decode the predictions and gold answers
                 predicted_text = self.tokenizer.decode(predictions, skip_special_tokens=True)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
