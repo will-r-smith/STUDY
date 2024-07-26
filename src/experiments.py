@@ -164,7 +164,7 @@ class Experiment:
                 print(logits.size())
                 print(gold_answer_token_ids_tensor.size())
 
-                print(logits[0, 64, :10])
+                #print(logits[0, 63, :10])
 
                 # Align logits with gold_answer_token_ids_tensor shape
                 logits = logits[:, -1, :]
