@@ -207,7 +207,7 @@ class Experiment:
 
         print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
-        original_loss, original_accuracy = self.evaluate(self.model, self.X, self.y)
+        original_loss, original_accuracy = self.evaluate(self.edited_modelmodel, self.X, self.y)
 
         print(f"Original Loss: {original_loss}")
         print(f"Original Accuracy: {original_accuracy}")
@@ -221,17 +221,17 @@ class Experiment:
             self.edited_model = deepcopy(self.model)
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
-            optimizer = torch.optim.Adam(self.trainable_parameters, lr=args.learning_rate)
+            optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
 
             print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
-            for epoch in range(args.num_epochs):
+            for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
                 optimizer.zero_grad()
 
-                for i in tqdm(range(0, len(self.X_train), args.batch_size)):
-                    my_batch_size = min(args.batch_size, len(self.X_train) - i)
+                for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
+                    my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
 
                     X_batch = X_train_shuffled[i: i + my_batch_size]
                     y_batch = y_train_shuffled[i: i + my_batch_size]
@@ -251,7 +251,7 @@ class Experiment:
 
                         batch_loss += loss
 
-                    batch_loss = batch_loss / args.batch_size
+                    batch_loss = batch_loss / self.args.batch_size
                     print(f"Batch Loss: {batch_loss.item()}")
 
                     scaler.scale(batch_loss).backward()
