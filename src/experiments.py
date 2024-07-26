@@ -161,11 +161,11 @@ class Experiment:
                 outputs = model(input_ids_tensor)
                 logits = outputs.logits
 
-            loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-            total_loss += loss
+                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                total_loss += loss
 
-            predictions = logits[:, -1, :].argmax(dim=-1)
-            correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+                predictions = logits[:, -1, :].argmax(dim=-1)
+                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
 
         avg_loss = total_loss / len(X)
         accuracy = correct_predictions / len(X)
@@ -230,16 +230,15 @@ class Experiment:
             print(name)
             self.edited_model = deepcopy(self.original_model)
 
-
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
+            # Ensure parameters have requires_grad=True
+            for param in self.trainable_parameters:
+                param.requires_grad = True
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
-            
-
 
             print(self.trainable_parameters[0].data[:5, :5])
-
 
             for epoch in range(self.args.num_epochs):
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
@@ -260,7 +259,6 @@ class Experiment:
                     optimizer.step()
 
                     print(self.trainable_parameters[0].data[:5, :5])
-                    
 
                 epoch_loss, epoch_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
@@ -272,8 +270,7 @@ class Experiment:
                 # Write something to preserve the best model and return to this at the end
 
             final_loss, final_accuracy = self.evaluate(self.edited_model, self.X, self.y)
-
-            
+                
                     
 
 
