@@ -232,14 +232,16 @@ class Experiment:
     def evaluate(self, model, X, y):
         model.eval()  # set model to evaluation mode
 
-        total_loss = 0
-        correct_predictions = 0
+        total_loss = 0.0
+        total_top1_correct = 0
+        total_top10_correct = 0
         total_predictions = 0
+
 
         input_ids, mask_ids, answer_ids = self.get_token_ids(X, y)
 
         batch_size = 8
-        total_loss = 0.0
+
 
         for i in tqdm(range(0, len(X), 8)):
             my_batch_size = min(batch_size, len(X) - i)
@@ -256,67 +258,51 @@ class Experiment:
             #mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
             masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
-            loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids[:,0])
+            labels = answer_ids[:,0]
+
+            loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], labels)
+            total_loss += loss.item()
 
             print(loss)
 
             top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
-            decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
+            top1_predictions = top_tokens[:, 0]
+            total_top1_correct += (top1_predictions == labels).sum().item()
 
+            # Calculate top-10 accuracy
+            top10_correct = [labels[j].item() in top_tokens[j].tolist() for j in range(len(labels))]
+            total_top10_correct += sum(top10_correct)
+            total_predictions += len(labels)
+                
+            decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
+            
+
+            #"""
             # Print or store the top 10 decoded tokens
             for idx, tokens in enumerate(decoded_top_tokens):
                 print(batch_x[idx])
                 print(f"Answer: {self.tokenizer.decode(answer_ids[idx,0])}")
                 print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
+                print(top10_correct[idx])
+
+            #"""
 
 
-        """
-        for idx, (question, answer) in enumerate(zip(X, y)):
-            input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
+        # Compute average loss for the batch
+        average_loss = total_loss / (len(X) / batch_size)
 
-            with torch.no_grad():
-                torch.cuda.empty_cache()
-                outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
-                
-                logits = outputs.logits
+        # Compute accuracies
+        top1_accuracy = total_top1_correct / total_predictions
+        top10_accuracy = total_top10_correct / total_predictions
 
-
-                #print(logits[0, 63, :10])
-
-                # Align logits with gold_answer_token_ids_tensor shape
-                logits = logits[:, -1, :]
-
-                # Calculate loss over the entire sequence
-                loss = self.loss_fn(logits, gold_answer_token_ids_tensor)
-                total_loss += loss.item()
-                #print(loss)
-
-                predictions = logits.argmax(dim=-1)
-                #print(predictions)
-
-                # Decode the predictions and gold answers
-                predicted_text = self.tokenizer.decode(predictions[0], skip_special_tokens=True)
-                gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
-                
-                
-                if idx < 5:  # Print only for the first 20 datapoints
-                    print(f"Question: {question}")
-                    print(f"Predicted Answer: {predicted_text}")
-                    print(f"Gold Answer: {gold_answer_text}")
-                    print(f"Original Answer: {answer}\n")
-
-                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
-                total_predictions += gold_answer_token_ids_tensor.size(-1)
-
-            avg_loss = total_loss / len(X)
-            accuracy = correct_predictions / len(X)"""
+        # Print or log the final metrics for the batch if needed
+        print(f'Final loss for the batch: {average_loss}')
+        print(f'Top-1 accuracy for the batch: {top1_accuracy}')
+        print(f'Top-10 accuracy for the batch: {top10_accuracy}')
 
         model.train()  # return model to train mode
 
-        avg_loss = 0
-        accuracy = 0
-
-        return avg_loss, accuracy
+        return average_loss, top1_accuracy, top10_accuracy
     
 
 
