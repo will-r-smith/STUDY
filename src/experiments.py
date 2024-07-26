@@ -160,7 +160,8 @@ class Experiment:
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
-        original_loss, original_accuracy = self.evaluate(self.original_model, self.X, self.y)
+        orignal_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X, self.y)
+
 
         parameters = self.get_parameters()
 
@@ -200,7 +201,7 @@ class Experiment:
 
                     #print(self.trainable_parameters[0].data[:5, :5])
 
-                epoch_loss, epoch_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
+                epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
                 best_loss = 0
 
@@ -235,12 +236,10 @@ class Experiment:
         total_loss = 0.0
         total_top1_correct = 0
         total_top10_correct = 0
-        total_predictions = 0
-
 
         input_ids, mask_ids, answer_ids = self.get_token_ids(X, y)
 
-        batch_size = 8
+        batch_size = 32
 
 
         for i in tqdm(range(0, len(X), 8)):
@@ -263,30 +262,21 @@ class Experiment:
             loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], labels)
             total_loss += loss.item()
 
-            print(loss)
-
             top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
-            print(top_tokens)
+
             
             top1_predictions = top_tokens[:,0,0]
-            print(top1_predictions)
-            print(labels)
 
             total_top1_correct += (top1_predictions == labels).sum().item()
 
             # Calculate top-10 accuracy
-            top10_correct = sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(batch_size)])
-            print(top_tokens[4,0,:].tolist())
-            print(labels[4].item())
-            print(top10_correct)
+            total_top10_correct += sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(batch_size)])
 
-            total_top10_correct += top10_correct
-            total_predictions += len(labels)
-                
+            
             decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
             
 
-            #"""
+            """
             # Print or store the top 10 decoded tokens
             for idx, tokens in enumerate(decoded_top_tokens):
                 print(batch_x[idx])
@@ -294,15 +284,14 @@ class Experiment:
                 print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
                 print(top10_correct)
 
-            #"""
-
+            """
 
         # Compute average loss for the batch
         average_loss = total_loss / (len(X) / batch_size)
 
         # Compute accuracies
-        top1_accuracy = total_top1_correct / total_predictions
-        top10_accuracy = total_top10_correct / total_predictions
+        top1_accuracy = total_top1_correct / len(X)
+        top10_accuracy = total_top10_correct / len(X)
 
         # Print or log the final metrics for the batch if needed
         print(f'Final loss for the batch: {average_loss}')
