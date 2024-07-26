@@ -277,10 +277,11 @@ class Experiment:
             total_top10_correct = []
 
             # Calculate top-10 accuracy
-            top10_correct = [labels[j].item() in top_tokens[j,0,:].tolist() for j in range(batch_size)]
+            top10_correct = sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(batch_size)])
             print(top_tokens[4,0,:].tolist())
             print(labels[4].item())
             print(top10_correct)
+
             total_top10_correct += top10_correct
             total_predictions += len(labels)
                 
