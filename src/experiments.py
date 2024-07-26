@@ -242,7 +242,7 @@ class Experiment:
 
         answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
 
-        return input_ids, mask_ids, answer_ids
+        return input_ids, mask_token_id, answer_ids
 
 
 
@@ -268,18 +268,34 @@ class Experiment:
                 logits = model(**input_ids).logits
                 logprob = torch.log_softmax(logits, dim=2)
 
-            print(logprob.shape)
-            print(logits.shape)
+            mask_positions = (input_ids == mask_ids).nonzero(as_tuple=True)
+            masked_logits = logits[mask_positions]
+            masked_labels = answer_ids[mask_positions]
+            loss = torch.nn.CrossEntropyLoss(masked_logits, masked_labels)
+
+            print(loss)
+
+            top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
+            decoded_top_tokens = [self.tokenizer.decode(tokens) for tokens in top_tokens]
+
+            print(batch_y)
+            print(decoded_top_tokens)
+
+
+
+
+            #print(logprob.shape)
+            #print(logits.shape)
 
             vocab_size = logprob.shape[2]
-            print(vocab_size)
+            #print(vocab_size)
             mask_ids = mask_ids.view(my_batch_size, 1, 1)
             mask_ids = mask_ids.expand([my_batch_size, 1, vocab_size])
 
-            print(batch_x)
+            #print(batch_x)
 
-            print(mask_ids)
-            print(mask_ids.shape)
+            #print(mask_ids)
+            #print(mask_ids.shape)
 
             predicted_logprob = torch.gather(logprob, index=mask_ids, dim=1)     # batch size x 1 x vocab_size
             predicted_logprob = predicted_logprob[:, 0, :]                             # batch x vocab_size
