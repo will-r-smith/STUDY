@@ -274,8 +274,6 @@ class Experiment:
 
             total_top1_correct += (top1_predictions == labels).sum().item()
 
-            total_top10_correct = []
-
             # Calculate top-10 accuracy
             top10_correct = sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(batch_size)])
             print(top_tokens[4,0,:].tolist())
