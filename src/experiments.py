@@ -126,14 +126,13 @@ class Experiment:
         with torch.no_grad():
             for question, answer in zip(X, y):
                 inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=64).to(self.device)
-                print(answer)
-                print(answer.strip())
+                stripped_answer = answer.strip()
                 
 
                 input_ids_list.append(inputs.input_ids)
                 attention_mask_list.append(inputs.attention_mask)
 
-                gold_answer_token_ids = self.tokenizer(answer)["input_ids"]
+                gold_answer_token_ids = self.tokenizer(stripped_answer)["input_ids"]
                 print(gold_answer_token_ids)
                 gold_answer_token_id = int(gold_answer_token_ids[0])
                 gold_answer_token_ids_list.append(gold_answer_token_id)
