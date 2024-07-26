@@ -174,7 +174,7 @@ class Experiment:
                 total_loss += loss.item()
                 print(loss)
 
-                predictions = logits.topk(3, dim=-1).indices
+                predictions = logits.topk(10, dim=-1).indices
                 print(gold_answer_token_ids_tensor)
                 print(predictions)
                 # Decode the predictions and gold answers
@@ -182,6 +182,8 @@ class Experiment:
                     print(p)
                     predicted_text = self.tokenizer.decode(p, skip_special_tokens=True)
                     print(predicted_text)
+
+                print(self.tokenizer.decode(predictions))
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
 
                 if idx < 5:  # Print only for the first 20 datapoints
