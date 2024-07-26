@@ -137,6 +137,7 @@ class Experiment:
                 #gold_answer_token_id = int(gold_answer_token_ids[1])
                 gold_answer_token_ids_list.append(gold_answer_token_ids)
 
+        print(gold_answer_token_ids_list)
         input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
         attention_mask_tensor = torch.cat(attention_mask_list, dim=0).to(self.device)
         gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
@@ -173,12 +174,14 @@ class Experiment:
                 print(gold_answer_token_ids_tensor)
                 print(predictions)
                 # Decode the predictions and gold answers
-                predicted_text = self.tokenizer.decode(predictions, skip_special_tokens=True)
+                for p in range(len(predictions.item()[0])):
+                    predicted_text = self.tokenizer.decode(p, skip_special_tokens=True)
+                    print(predicted_text)
                 gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
 
                 if idx < 5:  # Print only for the first 20 datapoints
                     print(f"Question: {question}")
-                    print(f"Predicted Answer: {predicted_text}")
+                    #print(f"Predicted Answer: {predicted_text}")
                     print(f"Gold Answer: {gold_answer_text}")
                     print(f"Original Answer: {answer}\n")
 
