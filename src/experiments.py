@@ -255,7 +255,8 @@ class Experiment:
                     input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
 
                     torch.cuda.empty_cache()
-                    outputs = self.edited_model(input_ids_tensor)
+                    model = self.edited_model
+                    outputs = model(input_ids_tensor)
                     logits = outputs.logits
 
                     batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
