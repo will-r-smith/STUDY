@@ -271,9 +271,7 @@ class Experiment:
             mask_positions = (input_ids["input_ids"] == self.tokenizer.mask_token_id).nonzero(as_tuple=True)
             masked_logits = logits[:,-1,:]
 
-            print(answer_ids)
-            masked_labels = answer_ids[:,-1,:]
-            loss = torch.nn.CrossEntropyLoss(masked_logits, masked_labels)
+            loss = torch.nn.CrossEntropyLoss(masked_logits, answer_ids)
 
             print(loss)
 
