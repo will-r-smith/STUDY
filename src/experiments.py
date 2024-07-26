@@ -148,27 +148,31 @@ class Experiment:
 
 
     def evaluate(self, model, X, y):
+        model.eval()  # set model to evaluation mode
+        
+        total_loss = 0
+        correct_predictions = 0
 
-        model.eval() # set model to evaluation mode
-        
-        input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X, y)
-        
-        torch.cuda.empty_cache()
-        
-        outputs = model(input_ids_tensor)
-        logits = outputs.logits
+        for question, answer in zip(X, y):
+            input_ids_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
 
-        loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
-        
+            with torch.no_grad():
+                torch.cuda.empty_cache()
+                outputs = model(input_ids_tensor)
+                logits = outputs.logits
 
-        # Calculate accuracy
-        predictions = logits[:, -1, :].argmax(dim=-1)
-        correct_predictions = (predictions == gold_answer_token_ids_tensor).sum().item()
+                loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                total_loss += loss.item()
+
+                predictions = logits[:, -1, :].argmax(dim=-1)
+                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
+
+        avg_loss = total_loss / len(X)
         accuracy = correct_predictions / len(X)
 
-        model.train() # return model to train mode
+        model.train()  # return model to train mode
 
-        return loss, accuracy
+        return avg_loss, accuracy
 
 
 
