@@ -278,6 +278,7 @@ class Experiment:
             total_top1_correct += (top_tokens[:,0,0] == answer_ids).sum().item()
             total_top10_correct += sum([answer_ids[j].item() in top_tokens[j,0,:].tolist() for j in range(len(answer_ids))])
 
+            torch.cuda.empty_cache()
             
             #decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
             
