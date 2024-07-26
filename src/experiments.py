@@ -161,9 +161,9 @@ class Experiment:
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
-        orignal_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X, self.y)
+        original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X, self.y)
 
-        print(orignal_loss)
+        print(original_loss)
         print(original_top1_accuracy)
         print(original_top10_accuracy)
 
@@ -194,6 +194,7 @@ class Experiment:
                     
                     input_ids, mask_ids, answer_ids = self.get_token_ids(batch_x, batch_y)
 
+                    torch.cuda.empty_cache()
                     logits = self.edited_model(**input_ids).logits
 
                     mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, logits.shape[2]])
@@ -213,6 +214,8 @@ class Experiment:
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
                 best_loss = 0
+
+                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Top-1 Accuracy {epoch_top1_accuracy}, Epoch Top-1 Accuracy {epoch_top10_accuracy}, Original Loss: {original_loss}")
 
                 #print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
