@@ -238,10 +238,15 @@ class Experiment:
         answer_ids = []
         for answer in answers:
             id = self.tokenizer(answer)["input_ids"]
+            print(id)
             answer_ids.append(id[1])
 
-        #answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
 
+        print(answer_ids)
+
+        #answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)  # batch x 1
+        answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
+        print(answer_ids)
         return input_ids, mask_ids, answer_ids
 
 
