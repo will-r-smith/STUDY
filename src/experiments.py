@@ -180,24 +180,26 @@ class Experiment:
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
                 for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
+
                     my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
 
-                    torch.cuda.empty_cache()
-                    X_batch = X_train_shuffled[i: i + my_batch_size]
-                    y_batch = y_train_shuffled[i: i + my_batch_size]
+                    batch_x = X_train_shuffled[i: i + my_batch_size]
+                    batch_y = y_train_shuffled[i: i + my_batch_size]
+                    
+                    input_ids, mask_ids, answer_ids = self.get_token_ids(batch_x, batch_y)
 
-                    input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids(X_batch, y_batch)
+                    logits = self.edited_model(**input_ids).logits
 
-                    torch.cuda.empty_cache()
-                    outputs = self.edited_model(input_ids_tensor, attention_mask=attention_mask_tensor)
-                    logits = outputs.logits
-                    torch.cuda.empty_cache()
-                    batch_loss = self.loss_fn(logits[:, -1, :], gold_answer_token_ids_tensor)
+                    mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, logits.shape[2]])
+                    masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
+                    batch_loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
 
                     optimizer.zero_grad()
                     batch_loss.backward()
                     optimizer.step()
+
+                    torch.cuda.empty_cache()
 
                     #print(self.trainable_parameters[0].data[:5, :5])
 
@@ -226,7 +228,8 @@ class Experiment:
         answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in answers]
 
         answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
-        return input_ids, mask_ids, answer_ids
+
+        return input_ids, mask_ids, answer_ids[:,0]
 
 
 
@@ -250,32 +253,21 @@ class Experiment:
 
             with torch.no_grad():
                 logits = model(**input_ids).logits
-                logprob = torch.log_softmax(logits, dim=2)
 
-            vocab_size = logprob.shape[2]
-            mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, vocab_size])
-            #mask_token_ids = mask_token_ids.expand([my_batch_size, 1, vocab_size])
+            mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, logits.shape[2]])
             masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
-            labels = answer_ids[:,0]
-
-            loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], labels)
+            loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
             total_loss += loss.item()
 
             top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
 
-            
-            top1_predictions = top_tokens[:,0,0]
-
-            total_top1_correct += (top1_predictions == labels).sum().item()
-
-            # Calculate top-10 accuracy
-            total_top10_correct += sum([labels[j].item() in top_tokens[j,0,:].tolist() for j in range(len(labels))])
+            total_top1_correct += (top_tokens[:,0,0] == answer_ids).sum().item()
+            total_top10_correct += sum([answer_ids[j].item() in top_tokens[j,0,:].tolist() for j in range(len(answer_ids))])
 
             
-            decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
+            #decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
             
-
             """
             # Print or store the top 10 decoded tokens
             for idx, tokens in enumerate(decoded_top_tokens):
@@ -339,59 +331,4 @@ class Experiment:
         return input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor
 
 
-
-    def evaluate(self, model, X, y):
-        model.eval()  # set model to evaluation mode
-
-        total_loss = 0
-        correct_predictions = 0
-        total_predictions = 0
-
-        for i in range(10):
-            print(f"Q:{X[i]}A:{y[i]}")
-
-        for idx, (question, answer) in enumerate(zip(X, y)):
-            input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor = self.get_token_ids([question], [answer])
-
-            with torch.no_grad():
-                torch.cuda.empty_cache()
-                outputs = model(input_ids_tensor, attention_mask=attention_mask_tensor)
-                
-                logits = outputs.logits
-
-
-                #print(logits[0, 63, :10])
-
-                # Align logits with gold_answer_token_ids_tensor shape
-                logits = logits[:, -1, :]
-
-                # Calculate loss over the entire sequence
-                loss = self.loss_fn(logits, gold_answer_token_ids_tensor)
-                total_loss += loss.item()
-                print(loss)
-
-                predictions = logits.argmax(dim=-1)
-                print(predictions)
-
-                # Decode the predictions and gold answers
-                predicted_text = self.tokenizer.decode(predictions[0], skip_special_tokens=True)
-                gold_answer_text = self.tokenizer.decode(gold_answer_token_ids_tensor[0], skip_special_tokens=True)
-
-                if idx < 5:  # Print only for the first 20 datapoints
-                    print(f"Question: {question}")
-                    print(f"Predicted Answer: {predicted_text}")
-                    print(f"Gold Answer: {gold_answer_text}")
-                    print(f"Original Answer: {answer}\n")
-
-                correct_predictions += (predictions == gold_answer_token_ids_tensor).sum().item()
-                total_predictions += gold_answer_token_ids_tensor.size(-1)
-
-            avg_loss = total_loss / len(X)
-            accuracy = correct_predictions / len(X)
-
-        model.train()  # return model to train mode
-
-        return avg_loss, accuracy
-    
-
-    """
+"""
