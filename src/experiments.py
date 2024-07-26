@@ -171,7 +171,7 @@ class Experiment:
                 logits = logits[:, -1, :]
 
                 # Calculate loss over the entire sequence
-                loss = self.loss_fn(logits.view(-1, logits.size(-1)), gold_answer_token_ids_tensor.view(-1))
+                loss = self.loss_fn(logits, gold_answer_token_ids_tensor)
                 total_loss += loss.item()
                 print(loss)
 
