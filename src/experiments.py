@@ -59,8 +59,8 @@ class Experiment:
 
         self.original_model.to(self.device)
 
-        self.edited_model = model
-        self.edited_model.to(self.device)
+        #self.edited_model = model
+        #self.edited_model.to(self.device)
 
         if self.args.verbose > 0:
             print("Model loaded.")
@@ -244,8 +244,8 @@ class Experiment:
             del self.edited_model
             torch.cuda.empty_cache()
 
-            self.edited_model = deepcopy(self.original_model)
-            self.edited_model.to(self.device)
+            self.edited_model = self.original_model
+            #self.edited_model.to(self.device)
 
 
             torch.cuda.empty_cache()
