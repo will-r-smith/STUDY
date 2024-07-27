@@ -65,9 +65,9 @@ def do_lr(model, name, weight, k):
 
     results = torch.svd_lowrank(weight, q=desired_rank, niter=niter)
 
-    U = results[0].clone().detach().requires_grad_(True)
-    S = torch.diag(results[1]).clone().detach().requires_grad_(True)
-    Vt = results[2].T.clone().detach().requires_grad_(True)
+    U = results[0].clone().detach().requires_grad_(True).to(weight.dtype)
+    S = torch.diag(results[1]).clone().detach().requires_grad_(True).to(weight.dtype)
+    Vt = results[2].T.clone().detach().requires_grad_(True).to(weight.dtype)
 
     # Create a valid parameter name by replacing periods
     param_name_base = name.replace('.', '_')
