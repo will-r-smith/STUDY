@@ -10,6 +10,13 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest", truncation=True).input_ids.to(self.device)
     #may need to select the 0 index here ^^^
 
+    # Compute the lengths of the original input sequences
+    input_lengths = [len(self.tokenizer.encode(x, truncation=True)) for x in X]
+
+    # Extract the last token index for each sequence before padding
+    answer_positions = torch.tensor([input_lengths[i] - 1 for i in range(len(X))]).to(self.device)
+
+
     answer_ids = answer_ids[:, -1]
 
     print(input_ids['input_ids'].shape)
@@ -25,13 +32,11 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     print(logits)
 
-    #shift_logits = logits[..., :-1, :].contiguous()
-    #shift_labels = answer_ids[..., :-1, :].contiguous()
+    answer_logits = logits[torch.arange(logits.size(0)), answer_positions]
 
 
-    loss = torch.nn.CrossEntropyLoss()(logits[:, -1, :], answer_ids)
+    loss = torch.nn.CrossEntropyLoss()(answer_logits, answer_ids)
 
-    #answer_ids = shift_labels[:, -1]
 
     if get_accuracy == True:
         top_tokens = torch.topk(logits[:, -1, :], 10, dim=-1).indices  # shape: (batch_size, top_k)
