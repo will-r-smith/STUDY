@@ -12,13 +12,11 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
 
     answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y_eval]
 
-    print(self.tokenizer(answers)["input_ids"])
 
     answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in answers]
 
     answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
 
-    print(answer_ids)
 
     answer_ids = answer_ids[:,0]
 
@@ -28,7 +26,6 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
     else:
         logits = model_eval(**input_ids).logits
 
-    print(answer_ids)
 
     mask_ids = mask_ids.view(bs, 1, 1).expand([bs, 1, logits.shape[2]])
     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
