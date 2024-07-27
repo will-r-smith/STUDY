@@ -32,7 +32,7 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
         logits = model(**input_ids).logits
 
     # Ensure logits are in float16 or float32
-    logits = logits.to(torch.float32)
+    logits = logits.to(torch.float16)
 
     # Ensure answer_ids are in int64 (long)
     answer_ids = answer_ids.to(torch.long)
