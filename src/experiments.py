@@ -18,13 +18,20 @@ class Experiment:
         self.args = args
         self.config = config
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Device: {self.device}")
+        self.device = "GPU" if torch.cuda.is_available() else "CPU"
 
+        if self.args.verbose > 0:
+            print(f"Device: {self.device}")
+        
         self.load_model()
 
 
     def load_model(self):
+
+        print(f"\nModel: {self.config[self.args[self.args.model]]["name"]}")
+
+        if self.args.verbose > 0:
+            print("\nLoading model...")
 
         if self.args.model == "roberta":
             from transformers import RobertaForMaskedLM
@@ -43,7 +50,7 @@ class Experiment:
                 llm_name,
                 revision="float16",
                 torch_dtype=torch.float16,
-                cache_dir='./cache'
+                cache_dir='./cache',
             ) 
 
         self.llm_name = llm_name   
@@ -53,12 +60,19 @@ class Experiment:
         self.edited_model = model
         self.edited_model.to(self.device)
 
-        print("loaded model")
+        if self.args.verbose > 0:
+            print("Model loaded.")
 
 
 
 
     def load_dataset(self):
+
+        print(f"\nDataset: {self.args.dataset}")
+
+        if self.args.verbose > 0:
+            print("Loading dataset...")
+
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_name)
 
@@ -82,6 +96,11 @@ class Experiment:
 
         self.dataset_size = len(self.X)
 
+        if self.args.verbose > 0:
+            print("Dataset loaded.")
+            print(f"Size: {len(self.dataset_size)}")
+
+            
 
     def get_parameters(self):
 
@@ -135,7 +154,7 @@ class Experiment:
 
         return model, parameters, diff_norm, relative_error
 
-        
+
 
 
     def intervene(self):
@@ -163,19 +182,36 @@ class Experiment:
 
         original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X_val, self.y_val)
 
-        print(f"Original Loss: {original_loss}, Original Top-1 Accuracy {original_top1_accuracy}, Original Top-1 Accuracy {original_top10_accuracy}")
+
+        if self.args.verbose > 0:
+            print(f"Original Loss: {original_loss}")
+        if self.args.verbose > 1:
+            print(f"Original Top-1 Accuracy {original_top1_accuracy}")
+        if self.args.verbose > 2:
+            print(f"Original Top-10 Accuracy {original_top10_accuracy}")
 
 
         parameters = self.get_parameters()
 
         for name, param in parameters:
+
+            print(f"\nPerforming invervention on: {name}")
+
+            if self.args.verbose > 0:
+                print(f"  {self.config.Arguments.intervention[self.args.intervention]}")
+
             self.edited_model = deepcopy(self.original_model)
 
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
             edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
-
-            print(f"Edited Model Loss: {edited_loss}, Edited Model  Top-1 Accuracy {edited_top1_accuracy}, Edited Model  Top-1 Accuracy {edited_top10_accuracy}")
+            
+            if self.args.verbose > 0:
+                print(f"  Edited Loss: {edited_loss}")
+            if self.args.verbose > 1:
+                print(f"  Edited Top-1 Accuracy {edited_top1_accuracy}")
+            if self.args.verbose > 2:
+                print(f"  Edited Top-10 Accuracy {edited_top10_accuracy}")
 
             # Ensure parameters have requires_grad=True
             for param in self.trainable_parameters:
@@ -183,9 +219,14 @@ class Experiment:
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
 
-            #print(self.trainable_parameters[0].data[:2, :2])
+            if self.args.verbose > 3:
+                print(f"            P[0,0]:   {self.trainable_parameters[0].data[0, 0].item()}")
 
             for epoch in range(self.args.num_epochs):
+
+                if self.args.verbose > 0:
+                    print(f"  \nEpoch {epoch}\n")
+
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
                 for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
@@ -204,7 +245,9 @@ class Experiment:
                     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
 
                     batch_loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
-                    #print(batch_loss)
+
+                    if self.args.verbose > 3:
+                        print(f"        Batch loss: {batch_loss}")
 
                     optimizer.zero_grad()
                     batch_loss.backward()
@@ -212,23 +255,33 @@ class Experiment:
 
                     torch.cuda.empty_cache()
 
-                    
-                #print(self.trainable_parameters[0].data[:2, :2])
+                if self.args.verbose > 3:
+                    print(self.trainable_parameters[0].data[0, 0].item())
+
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
+                if self.args.verbose > 0:
+                    print(f"    Epoch {epoch} Loss: {epoch_loss}")
+                if self.args.verbose > 1:
+                    print(f"    Epoch {epoch} Top-1 Accuracy {epoch_top1_accuracy}")
+                if self.args.verbose > 2:
+                    print(f"    Epoch {epoch} Top-10 Accuracy {epoch_top10_accuracy}")
 
-                print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Top-1 Accuracy {epoch_top1_accuracy}, Epoch Top-1 Accuracy {epoch_top10_accuracy}, Original Loss: {original_loss}")
-
-                #print(f"Epoch: {epoch}, Epoch Loss: {epoch_loss}, Epoch Accuracy {epoch_accuracy}, Epoch Perplexity: {torch.exp(torch.tensor(epoch_loss)).item()}, Original Loss: {original_loss}, Best Loss: {best_loss}")
 
                 # Write something to preserve the best model and return to this at the end
 
             final_loss, final_top1_accuracy, final_top10_accuracy = self.evaluate(self.edited_model, self.X, self.y)
 
-            print(final_loss)
-            print(final_top1_accuracy)
-            print(final_top10_accuracy)
-                
+
+            print(f"Finished fine-tuning layer: {name}")
+
+            if self.args.verbose > 0:
+                print(f"  Final Loss: {final_loss}")
+            if self.args.verbose > 1:
+                print(f"  Final Top-1 Accuracy {final_top1_accuracy}")
+            if self.args.verbose > 2:
+                print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
+
                     
 
 

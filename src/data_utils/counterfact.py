@@ -7,8 +7,6 @@ def load_dataset(self):
 
     eval_set_length = int(self.args.prop_data * len(data))
 
-    print(f"Performing evaluation with {eval_set_length} datapoints")
-
     data = data[:eval_set_length]
 
     num_dp = len(data)
