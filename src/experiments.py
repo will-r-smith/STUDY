@@ -170,6 +170,7 @@ class Experiment:
             loss, accuracy = self.evaluate()
 
 
+
     def evaluate(self, model, X, y):
         model.eval()
 

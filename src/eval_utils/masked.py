@@ -1,14 +1,16 @@
 
 import torch
 
-def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
+def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accuracy):
 
-    input_ids = self.tokenizer(X, return_tensors="pt", padding="longest").to(self.device)
+    bs = len(X_eval)
+
+    input_ids = self.tokenizer(X_eval, return_tensors="pt", padding="longest").to(self.device)
 
     mask_token_id = self.tokenizer.convert_tokens_to_ids('<mask>')
     mask_ids = (input_ids["input_ids"] == mask_token_id).float().argmax(dim=1)
 
-    answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
+    answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y_eval]
 
     print(self.tokenizer(answers)["input_ids"])
 
@@ -22,13 +24,13 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     if requires_grad == False:
         with torch.no_grad():
-            logits = model(**input_ids).logits
+            logits = model_eval(**input_ids).logits
     else:
-        logits = model(**input_ids).logits
+        logits = model_eval(**input_ids).logits
 
     print(answer_ids)
 
-    mask_ids = mask_ids.view(len(X), 1, 1).expand([len(X), 1, logits.shape[2]])
+    mask_ids = mask_ids.view(bs, 1, 1).expand([bs, 1, logits.shape[2]])
     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
     loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
 
