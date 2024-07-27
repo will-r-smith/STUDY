@@ -10,6 +10,8 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest").input_ids.to(self.device)
     #may need to select the 0 index here ^^^
 
+    torch.cuda.empty_cache()
+    
     if requires_grad == False:
         with torch.no_grad():
             logits = model(**input_ids).logits

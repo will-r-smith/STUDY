@@ -20,6 +20,8 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
 
     answer_ids = answer_ids[:,0]
 
+    torch.cuda.empty_cache()
+    
     if requires_grad == False:
         with torch.no_grad():
             logits = model_eval(**input_ids).logits

@@ -277,7 +277,6 @@ class Experiment:
                     batch_x = X_train_shuffled[i: i + my_batch_size]
                     batch_y = y_train_shuffled[i: i + my_batch_size]
 
-
                     batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
 
                     optimizer.zero_grad()
