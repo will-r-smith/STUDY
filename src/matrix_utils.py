@@ -85,6 +85,13 @@ def do_lr(model, name, weight, k):
         U = getattr(self, f"{param_name_base}_U")
         S = getattr(self, f"{param_name_base}_S")
         Vt = getattr(self, f"{param_name_base}_Vt")
+
+        # Ensure all tensors are of the same dtype
+        dtype = input.dtype
+        U = U.to(dtype)
+        S = S.to(dtype)
+        Vt = Vt.to(dtype)
+        
         weight_approx = U @ S @ Vt
         return nn.functional.linear(input, weight_approx)
 
