@@ -18,7 +18,7 @@ class Experiment:
         self.args = args
         self.config = config
 
-        self.device = "GPU" if torch.cuda.is_available() else "CPU"
+        self.device = "cuda" if torch.cuda.is_available() else "CPU"
 
         if self.args.verbose > 0:
             print(f"Device: {self.device}")
