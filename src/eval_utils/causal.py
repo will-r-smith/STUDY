@@ -10,6 +10,8 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest", truncation=True).input_ids.to(self.device)
     #may need to select the 0 index here ^^^
 
+    answer_ids = answer_ids[:, -1]
+
     print(input_ids['input_ids'].shape)
     print(answer_ids.shape)
 
@@ -23,18 +25,16 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     print(logits)
 
-    shift_logits = logits[..., :-1, :].contiguous()
-    shift_labels = answer_ids[..., :-1, :].contiguous()
+    #shift_logits = logits[..., :-1, :].contiguous()
+    #shift_labels = answer_ids[..., :-1, :].contiguous()
 
-    print(shift_logits.shape)
-    print(shift_labels.shape)
 
-    loss = torch.nn.CrossEntropyLoss()(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+    loss = torch.nn.CrossEntropyLoss()(logits[:, -1, :], answer_ids)
 
-    answer_ids = shift_labels[:, -1]
+    #answer_ids = shift_labels[:, -1]
 
     if get_accuracy == True:
-        top_tokens = torch.topk(shift_logits[:, -1, :], 10, dim=-1).indices  # shape: (batch_size, top_k)
+        top_tokens = torch.topk(logits[:, -1, :], 10, dim=-1).indices  # shape: (batch_size, top_k)
 
         top1_predictions = top_tokens[:, 0]
         top1_correct = (top1_predictions == answer_ids).sum().item()
