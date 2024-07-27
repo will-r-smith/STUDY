@@ -16,6 +16,8 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
 
+    answer_ids = answer_ids[:,0]
+
     if requires_grad == False:
         with torch.no_grad():
             logits = model(**input_ids).logits
