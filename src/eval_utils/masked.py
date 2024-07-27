@@ -42,7 +42,7 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
         top1_predictions = top_tokens[:, 0]
         print(top1_predictions)
 
-        top1_correct = (top1_predictions == answer_ids).sum().item()
+        top1_correct = (top_tokens[:,0,0] == answer_ids).sum().item()
         top10_correct = sum([answer_ids[j].item() in top_tokens[j].tolist() for j in range(len(answer_ids))])
 
         return loss.item(), top1_correct, top10_correct
