@@ -5,13 +5,13 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     #my_batch_size = len(X)
 
-    input_ids = self.tokenizer(X, return_tensors="pt").to(self.device)
+    input_ids = self.tokenizer(X, return_tensors="pt", padding="longest", truncation=True).to(self.device)
 
-    answer_ids = self.tokenizer(y, return_tensors="pt").input_ids.to(self.device)
+    answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest", truncation=True).input_ids.to(self.device)
     #may need to select the 0 index here ^^^
 
     torch.cuda.empty_cache()
-
+    
     if requires_grad == False:
         with torch.no_grad():
             logits = model(**input_ids).logits

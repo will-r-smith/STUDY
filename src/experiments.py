@@ -76,13 +76,13 @@ class Experiment:
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_name)
 
-        """if self.args.model in ["pythia", "gptj"]:
+        if self.args.model in ["pythia", "gptj"]:
             # Add padding and mask token if they don't exist
             self.tokenizer.add_special_tokens({
                 'pad_token': self.tokenizer.eos_token,
-                'mask_token': '<mask>'
+                #'mask_token': '<mask>'
             })
-            self.edited_model.resize_token_embeddings(len(self.tokenizer))"""
+            self.edited_model.resize_token_embeddings(len(self.tokenizer))
 
         module = importlib.import_module(f"src.data_utils.{self.args.dataset}")
         load_dataset = getattr(module, 'load_dataset')
