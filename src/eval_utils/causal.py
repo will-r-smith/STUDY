@@ -32,6 +32,8 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
         logits = model(**input_ids).logits
 
 
+    logits = logits.to(answer_ids.dtype)
+
     answer_logits = logits[torch.arange(logits.size(0)), answer_positions]
 
     torch.cuda.empty_cache()
