@@ -8,7 +8,6 @@ import importlib
 from transformers import AutoTokenizer
 
 from src.matrix_utils import norms, do_lr, do_mm
-from src.eval_utils.get_accuracy import get_accuracy
 
 
 class Experiment:
