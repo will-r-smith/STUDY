@@ -20,16 +20,14 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     answer_ids = answer_ids[:, -1]
 
-    print(input_ids['input_ids'].shape)
-    print(answer_ids.shape)
-
     torch.cuda.empty_cache()
     
     if requires_grad == False:
-        with torch.no_grad():
+        with torch.no_grad(), torch.cuda.amp.autocast():
             logits = model(**input_ids).logits
     else:
-        logits = model(**input_ids).logits
+        with torch.cuda.amp.autocast():
+            logits = model(**input_ids).logits
 
     # Ensure logits are in float16 or float32
     #logits = logits.to(torch.float16)

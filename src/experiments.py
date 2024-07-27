@@ -9,6 +9,7 @@ from transformers import AutoTokenizer
 
 from src.matrix_utils import norms, do_lr, do_mm
 
+from accelerate import Accelerator
 
 class Experiment:
 
@@ -59,11 +60,15 @@ class Experiment:
 
         self.original_model.to(self.device)
 
-        #self.edited_model = model
+        self.edited_model = model
         #self.edited_model.to(self.device)
 
         if self.args.verbose > 0:
             print("Model loaded.")
+
+        self.accelerator = Accelerator(cpu_offload=True)  # Enable CPU offloading
+        self.edited_model = self.accelerator.prepare(self.edited_model)
+            
 
 
 
@@ -270,6 +275,7 @@ class Experiment:
                 param.requires_grad = True
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
+            optimizer = self.accelerator.prepare(optimizer)
 
             if self.args.verbose > 3:
                 print(f"            P[0,0]:   {self.trainable_parameters[0].data[0, 0].item()}")
