@@ -37,9 +37,14 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     loss = torch.nn.CrossEntropyLoss()(answer_logits, answer_ids)
 
+    loss_b = torch.nn.CrossEntropyLoss()(logits[:,-1,:], answer_ids)
+
+    print(loss)
+    print(loss_b)
+
 
     if get_accuracy == True:
-        top_tokens = torch.topk(logits[:, -1, :], 10, dim=-1).indices  # shape: (batch_size, top_k)
+        top_tokens = torch.topk(answer_logits, 10, dim=-1).indices  # shape: (batch_size, top_k)
 
         top1_predictions = top_tokens[:, 0]
         top1_correct = (top1_predictions == answer_ids).sum().item()
