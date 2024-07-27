@@ -10,7 +10,7 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest", truncation=True).input_ids.to(self.device)
     #may need to select the 0 index here ^^^
 
-    print(input_ids.shape)
+    print(input_ids['input_ids'].shape)
     print(answer_ids.shape)
 
     torch.cuda.empty_cache()
