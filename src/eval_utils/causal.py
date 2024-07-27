@@ -31,8 +31,12 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     else:
         logits = model(**input_ids).logits
 
+    # Ensure logits are in float16 or float32
+    logits = logits.to(torch.float32)
 
-    logits = logits.to(answer_ids.dtype)
+    # Ensure answer_ids are in int64 (long)
+    answer_ids = answer_ids.to(torch.long)
+
 
     answer_logits = logits[torch.arange(logits.size(0)), answer_positions]
 
