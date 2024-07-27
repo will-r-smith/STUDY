@@ -235,9 +235,7 @@ class Experiment:
         for name, param in parameters:
 
             print(f"\nPerforming invervention on: {name}")
-
-            if self.args.verbose > 0:
-                print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}")
+            print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
             self.edited_model = deepcopy(self.original_model)
 
