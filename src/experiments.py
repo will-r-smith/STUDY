@@ -57,6 +57,8 @@ class Experiment:
 
         self.original_model = model
 
+        self.original_model.to('cpu')
+
         self.edited_model = model
         self.edited_model.to(self.device)
 
@@ -239,6 +241,7 @@ class Experiment:
 
             torch.cuda.empty_cache()
             self.edited_model = deepcopy(self.original_model)
+            self.edited_model.to(self.device)
 
             torch.cuda.empty_cache()
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
@@ -246,7 +249,7 @@ class Experiment:
             edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
             
             torch.cuda.empty_cache()
-            
+
             if self.args.verbose > 0:
                 print(f"  Edited Loss: {edited_loss}")
             if self.args.verbose > 1:
