@@ -1,6 +1,6 @@
 import pickle
 
-def load_dataset(self):
+def load_dataset(self, model_type):
 
     with open("data/counterfact", "rb") as f:
         data = pickle.load(f)
@@ -21,14 +21,15 @@ def load_dataset(self):
         assert answer.startswith(" "), f"Found answer that doesn't start with space ${answer}$"
         dataset.append((question, answer))
 
+    
     for i in range(len(dataset)):
         question, answer = dataset[i]
 
-        if question.endswith(" "):
-            question = f"{question}<mask>."
-        else:
-            question = f"{question} <mask>."
-
+        if model_type == "roberta":
+            if question.endswith(" "):
+                question = f"{question}<mask>."
+            else:
+                question = f"{question} <mask>."
 
         X.append(question)
         y.append(answer)
