@@ -98,7 +98,7 @@ class Experiment:
 
         if self.args.verbose > 0:
             print("Dataset loaded.")
-            print(f"Size: {len(self.dataset_size)}")
+            print(f"Size: {self.dataset_size}")
 
             
 
