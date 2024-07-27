@@ -178,9 +178,9 @@ class Experiment:
         total_top1_correct = 0
         total_top10_correct = 0
 
-        for i in tqdm(range(0, len(self.X), self.args.batch_size)):
+        for i in tqdm(range(0, len(X), self.args.batch_size)):
 
-            my_batch_size = min(self.args.batch_size, len(self.X) - i)
+            my_batch_size = min(self.args.batch_size, len(X) - i)
 
             batch_x = X[i: i + my_batch_size]
             batch_y = y[i: i + my_batch_size]
