@@ -30,7 +30,6 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     else:
         logits = model(**input_ids).logits
 
-    print(logits)
 
     answer_logits = logits[torch.arange(logits.size(0)), answer_positions]
 
