@@ -66,7 +66,7 @@ class Experiment:
         if self.args.verbose > 0:
             print("Model loaded.")
 
-        self.accelerator = Accelerator(cpu_offload=True)  # Enable CPU offloading
+        self.accelerator = Accelerator()
         self.edited_model = self.accelerator.prepare(self.edited_model)
             
 
