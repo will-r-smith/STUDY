@@ -57,13 +57,14 @@ class Experiment:
 
         self.original_model = model
 
-        #self.original_model.to('cpu')
+        self.original_model.to(self.device)
 
-        #self.edited_model = model
-        #self.edited_model.to(self.device)
+        self.edited_model = model
+        self.edited_model.to(self.device)
 
         if self.args.verbose > 0:
             print("Model loaded.")
+
 
 
 
@@ -239,12 +240,16 @@ class Experiment:
             print(f"\nPerforming invervention on: {name}")
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
+
+            del self.edited_model
             torch.cuda.empty_cache()
 
             self.edited_model = deepcopy(self.original_model)
+            self.edited_model.to(self.device)
 
 
             torch.cuda.empty_cache()
+
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
             
             self.edited_model.to(self.device)
