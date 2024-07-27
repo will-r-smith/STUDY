@@ -1,6 +1,5 @@
 import torch
 from copy import deepcopy
-import copy
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
@@ -60,8 +59,8 @@ class Experiment:
 
         #self.original_model.to('cpu')
 
-        self.edited_model = model
-        self.edited_model.to(self.device)
+        #self.edited_model = model
+        #self.edited_model.to(self.device)
 
         if self.args.verbose > 0:
             print("Model loaded.")
@@ -148,7 +147,7 @@ class Experiment:
         original_mat_tensor = deepcopy(param)
 
         if self.args.intervention == "lr":
-            model, approx_mat, parameters = do_lr(self.original_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
+            model, approx_mat, parameters = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
         elif self.args.intervention == "mm":
             model, approx_mat = do_mm(original_mat)
@@ -241,10 +240,15 @@ class Experiment:
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
             torch.cuda.empty_cache()
-            self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
+
+            self.edited_model = deepcopy(self.original_model)
+
 
             torch.cuda.empty_cache()
+            self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
             
+            self.edited_model.to(self.device)
+
             edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
             
             torch.cuda.empty_cache()
