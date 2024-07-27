@@ -28,7 +28,7 @@ class Experiment:
 
     def load_model(self):
 
-        print(f"\nModel: {self.config[self.args[self.args.model]]["name"]}")
+        print(f"\nModel: {self.config[self.args.model]["name"]}")
 
         if self.args.verbose > 0:
             print("\nLoading model...")
