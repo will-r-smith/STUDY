@@ -84,7 +84,7 @@ class Experiment:
                 'pad_token': self.tokenizer.eos_token,
                 #'mask_token': '<mask>'
             })
-            self.edited_model.resize_token_embeddings(len(self.tokenizer))
+            self.original_model.resize_token_embeddings(len(self.tokenizer))
 
         module = importlib.import_module(f"src.data_utils.{self.args.dataset}")
         load_dataset = getattr(module, 'load_dataset')
