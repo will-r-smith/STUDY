@@ -184,7 +184,7 @@ class Experiment:
             batch_x = X[i: i + my_batch_size]
             batch_y = y[i: i + my_batch_size]
 
-            batch_loss, top1_correct, top10_correct = self.generate_outputs(self, model, batch_x, batch_y, True, True)
+            batch_loss, top1_correct, top10_correct = self.generate_outputs(self, model, batch_x, batch_y, False, True)
 
             total_loss += batch_loss
             total_top1_correct += top1_correct

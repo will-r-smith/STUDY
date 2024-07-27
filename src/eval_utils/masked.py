@@ -22,6 +22,8 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     else:
         logits = model(**input_ids).logits
 
+    print(answer_ids)
+
     mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, logits.shape[2]])
     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
     loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
