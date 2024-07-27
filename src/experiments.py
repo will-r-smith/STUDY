@@ -241,7 +241,7 @@ class Experiment:
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
 
-            del self.edited_model
+            #del self.edited_model
             torch.cuda.empty_cache()
 
             self.edited_model = self.original_model
