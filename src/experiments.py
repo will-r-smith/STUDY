@@ -148,7 +148,7 @@ class Experiment:
         original_mat_tensor = deepcopy(param)
 
         if self.args.intervention == "lr":
-            model, approx_mat, parameters = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
+            model, approx_mat, parameters = do_lr(self.original_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
         elif self.args.intervention == "mm":
             model, approx_mat = do_mm(original_mat)
@@ -241,13 +241,10 @@ class Experiment:
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
             torch.cuda.empty_cache()
-            self.edited_model = copy.copy(self.original_model)
-            torch.cuda.empty_cache()
-            self.edited_model.load_state_dict(self.original_model.state_dict())
-
-            torch.cuda.empty_cache()
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
+            torch.cuda.empty_cache()
+            
             edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
             
             torch.cuda.empty_cache()
