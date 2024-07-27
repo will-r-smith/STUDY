@@ -184,7 +184,7 @@ class Experiment:
             batch_x = X[i: i + my_batch_size]
             batch_y = y[i: i + my_batch_size]
 
-            batch_loss, top1_correct, top10_correct = self.generate_outputs(model, batch_x, batch_y, True, True)
+            batch_loss, top1_correct, top10_correct = self.generate_outputs(self, model, batch_x, batch_y, True, True)
 
             total_loss += batch_loss
             total_top1_correct += top1_correct
@@ -277,7 +277,7 @@ class Experiment:
                     batch_y = y_train_shuffled[i: i + my_batch_size]
 
 
-                    batch_loss = self.generate_outputs(self.edited_model, batch_x, batch_y, True, False)
+                    batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
 
                     optimizer.zero_grad()
                     batch_loss.backward()
