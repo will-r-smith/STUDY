@@ -24,6 +24,8 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=10, help='Learning rate for fine-tuning')
     parser.add_argument('--num_epochs', type=int, default=10, help='Number of epochs in fine-tuning')
 
+    parser.add_argument('--verbose', type=int, default=1, help='Verbosity')
+
 
     args = parser.parse_args()
     
