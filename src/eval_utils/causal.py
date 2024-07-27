@@ -10,6 +10,9 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest", truncation=True).input_ids.to(self.device)
     #may need to select the 0 index here ^^^
 
+    print(input_ids.shape)
+    print(answer_ids.shape)
+
     torch.cuda.empty_cache()
     
     if requires_grad == False:
@@ -18,8 +21,14 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     else:
         logits = model(**input_ids).logits
 
+    print(logits)
+
     shift_logits = logits[..., :-1, :].contiguous()
     shift_labels = answer_ids[..., :-1, :].contiguous()
+
+    print(shift_logits.shape)
+    print(shift_labels.shape)
+
     loss = torch.nn.CrossEntropyLoss()(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
     answer_ids = shift_labels[:, -1]
