@@ -15,8 +15,10 @@ outputs:
   results_folder: "results"
   weights_folder: "weights"
 
+
 # Model settings
-pythia:
+pythia70m:
+  name: "Pythia-70M"
   type: "decoder"
   num_layers: 6
   naming_conv:
@@ -31,6 +33,7 @@ pythia:
 
 
 gptj: 
+  name: "GPT-J"
   type: "decoder"
   num_layers: 28
   naming_conv:
@@ -43,7 +46,9 @@ gptj:
       fc_in: ".mlp.fc_in.weight"
       fc_out: ".mlp.fc_out.weight"
 
+
 roberta:
+  name: "RoBERTa"
   type: "encoder_decoder"
   num_layers: 12
   naming_conv:
@@ -55,6 +60,7 @@ roberta:
       out_proj: "attention.output.dense.weight"
       fc_in: "intermediate.dense.weight"
       fc_out: "output.dense.weight"
+
 
 Arguments:
   lname:
