@@ -1,5 +1,6 @@
 import torch
 from copy import deepcopy
+import copy
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
@@ -57,7 +58,7 @@ class Experiment:
 
         self.original_model = model
 
-        self.original_model.to('cpu')
+        #self.original_model.to('cpu')
 
         self.edited_model = model
         self.edited_model.to(self.device)
@@ -240,8 +241,9 @@ class Experiment:
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
             torch.cuda.empty_cache()
-            self.edited_model = deepcopy(self.original_model)
-            self.edited_model.to(self.device)
+            self.edited_model = copy.copy(self.original_model)
+            torch.cuda.empty_cache()
+            self.edited_model.load_state_dict(self.original_model.state_dict())
 
             torch.cuda.empty_cache()
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
