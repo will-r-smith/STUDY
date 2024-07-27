@@ -5,10 +5,11 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     #my_batch_size = len(X)
 
+    y = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
+
     input_ids = self.tokenizer(X, return_tensors="pt", padding="longest", truncation=True).to(self.device)
 
     answer_ids = self.tokenizer(y, return_tensors="pt", padding="longest", truncation=True).input_ids.to(self.device)
-    #may need to select the 0 index here ^^^
 
     # Compute the lengths of the original input sequences
     input_lengths = [len(self.tokenizer.encode(x, truncation=True)) for x in X]

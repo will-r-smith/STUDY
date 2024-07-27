@@ -237,11 +237,15 @@ class Experiment:
             print(f"\nPerforming invervention on: {name}")
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
 
+            torch.cuda.empty_cache()
             self.edited_model = deepcopy(self.original_model)
 
+            torch.cuda.empty_cache()
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
 
             edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
+            
+            torch.cuda.empty_cache()
             
             if self.args.verbose > 0:
                 print(f"  Edited Loss: {edited_loss}")
