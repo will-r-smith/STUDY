@@ -214,6 +214,8 @@ class Experiment:
 
     def fine_tune(self):
 
+        
+
         if self.args.model == "roberta":
             loc = "src.eval_utils.masked"
         else: 
@@ -280,7 +282,10 @@ class Experiment:
             if self.args.verbose > 3:
                 print(f"            P[0,0]:   {self.trainable_parameters[0].data[0, 0].item()}")
 
+
+            scaler = torch.cuda.amp.GradScaler()
             self.edited_model.train()
+
 
             for epoch in range(self.args.num_epochs):
 
@@ -298,9 +303,18 @@ class Experiment:
 
                     batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
 
+                    
+                    scaler
+
+                    torch.cuda.empty_cache()
                     optimizer.zero_grad()
-                    batch_loss.backward()
-                    optimizer.step()
+
+                    scaler.scale(batch_loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                    
+                    #batch_loss.backward()
+                    #optimizer.step()
 
                     torch.cuda.empty_cache()
 
@@ -311,8 +325,6 @@ class Experiment:
                 if self.args.verbose > 3:
                     print(self.trainable_parameters[0].data[0, 0].item())
 
-
-                
 
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
@@ -327,7 +339,6 @@ class Experiment:
                 # Write something to preserve the best model and return to this at the end
 
             final_loss, final_top1_accuracy, final_top10_accuracy = self.evaluate(self.edited_model, self.X, self.y)
-
 
             print(f"Finished fine-tuning layer: {name}")
 
