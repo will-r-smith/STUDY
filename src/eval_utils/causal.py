@@ -41,19 +41,22 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
         top1_predictions = top_tokens[:, 0]
         top1_correct = (top1_predictions == answer_ids).sum().item()
         top10_correct = sum([answer_ids[j].item() in top_tokens[j].tolist() for j in range(len(answer_ids))])
-        """
+        #"""
+
         decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
         
         for idx, tokens in enumerate(decoded_top_tokens):
             print(X[idx])
             print(f"Answer: {self.tokenizer.decode(answer_ids[idx])}")
             print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
-            print(top10_correct)"""
+            print(top10_correct)
+
+        #"""
 
         return loss.item(), top1_correct, top10_correct
 
     else: 
-
+        
         return loss
 
     
