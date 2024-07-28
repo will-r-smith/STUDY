@@ -243,6 +243,7 @@ class Experiment:
         parameters = self.get_parameters()
 
         for name, param in parameters:
+            param.requires_grad = False
 
             print(f"\nPerforming invervention on: {name}")
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
@@ -303,11 +304,12 @@ class Experiment:
 
                     batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
 
+                    #scaler
+
                     
-                    scaler
+                    optimizer.zero_grad()
 
                     torch.cuda.empty_cache()
-                    optimizer.zero_grad()
 
                     scaler.scale(batch_loss).backward()
                     scaler.step(optimizer)
