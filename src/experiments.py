@@ -40,7 +40,7 @@ class Experiment:
             llm_name = "roberta-base"
             model = RobertaForMaskedLM.from_pretrained(llm_name, cache_dir='./cache')
             
-        elif self.args.model == "pythia":
+        elif self.args.model == "pythia70m":
             from transformers import AutoModelForCausalLM
             llm_name = "EleutherAI/pythia-160m-deduped-v0"
             model = AutoModelForCausalLM.from_pretrained(llm_name, cache_dir='./cache')
