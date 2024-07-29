@@ -72,8 +72,8 @@ class Experiment:
 
         self.accelerator = Accelerator()
         self.edited_model = self.accelerator.prepare(self.edited_model)
-            
 
+            
 
 
 

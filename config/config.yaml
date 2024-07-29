@@ -24,12 +24,12 @@ pythia70m:
   naming_conv:
     base: "gpt_neox.layers."
     layers: 
-      k_proj: "attention.query_key_value.weight"
-      q_proj: "attention.query_key_value.weight"
-      v_proj: "attention.query_key_value.weight"
-      out_proj: "attention.dense.weight"
-      fc_in: "mlp.dense_h_to_4h.weight"
-      fc_out: "mlp.dense_4h_to_h.weight"
+      block1: "input_layernorm.weight"
+      block2: "post_attention_layernorm.weight.weight"
+      block3: "attention.query_key_value.weight"
+      block4: "attention.dense.weight"
+      block5: "mlp.dense_h_to_4h.weight"
+      block6: "mlp.dense_4h_to_h.weight"
 
 
 gptj: 
@@ -39,12 +39,12 @@ gptj:
   naming_conv:
     base: "transformer.h."
     layers: 
-      k_proj: ".attn.k_proj.weight"
-      q_proj: ".attn.q_proj.weight"
-      v_proj: ".attn.v_proj.weight"
-      out_proj: ".attn.out_proj.weight"
-      fc_in: ".mlp.fc_in.weight"
-      fc_out: ".mlp.fc_out.weight"
+      block1: ".attn.k_proj.weight"
+      block2: ".attn.q_proj.weight"
+      block3: ".attn.v_proj.weight"
+      block4: ".attn.out_proj.weight"
+      block5: ".mlp.fc_in.weight"
+      block6: ".mlp.fc_out.weight"
 
 
 roberta:
@@ -54,12 +54,12 @@ roberta:
   naming_conv:
     base: "roberta.encoder.layer."
     layers: 
-      k_proj: "attention.self.key.weight"
-      q_proj: "attention.self.query.weight"
-      v_proj: "attention.self.value.weight"
-      out_proj: "attention.output.dense.weight"
-      fc_in: "intermediate.dense.weight"
-      fc_out: "output.dense.weight"
+      block1: "attention.self.key.weight"
+      block2: "attention.self.query.weight"
+      block3: "attention.self.value.weight"
+      block4: "attention.output.dense.weight"
+      block5: "intermediate.dense.weight"
+      block6: "output.dense.weight"
 
 
 Arguments:
