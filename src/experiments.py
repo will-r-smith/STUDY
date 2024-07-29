@@ -251,11 +251,11 @@ class Experiment:
 
             results["parameter"] = name
             results["dataset_len"] = self.dataset_size
-            results["rate"] = self.args["rate"]
+            results["rate"] = self.args.rate
             
-            results["learning_rate"] = self.args["learning_rate"]
+            results["learning_rate"] = self.args.learning_rate
             
-            results["es"] = self.args["early_stopping"]
+            results["es"] = self.args.early_stopping
             
             param.requires_grad = False
 
