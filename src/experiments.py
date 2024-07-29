@@ -65,7 +65,7 @@ class Experiment:
         self.original_model.to(self.device)
 
         self.edited_model = model
-        #self.edited_model.to(self.device)
+        self.edited_model.to(self.device)
 
         if self.args.verbose > 0:
             print("Model loaded.")
@@ -235,6 +235,7 @@ class Experiment:
 
         original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X_val, self.y_val)
 
+        original_results = {'original_loss': original_loss, 'original_top1_accuracy': original_top1_accuracy, 'original_top10_accuracy': original_top10_accuracy}
 
         if self.args.verbose > 0:
             print(f"Original Loss: {original_loss}")
@@ -247,7 +248,7 @@ class Experiment:
 
         for name, param in parameters:
 
-            results = {}
+            results = original_results
 
             results["parameter"] = name
             results["dataset_len"] = self.dataset_size
@@ -265,8 +266,9 @@ class Experiment:
             #del self.edited_model
             torch.cuda.empty_cache()
 
-            self.edited_model = self.original_model
-            #self.edited_model.to(self.device)
+            self.edited_model = deepcopy(self.original_model)
+
+            self.edited_model.to(self.device)
 
 
             torch.cuda.empty_cache()
@@ -327,8 +329,6 @@ class Experiment:
 
                     batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
 
-                    #scaler
-
                     
                     optimizer.zero_grad()
 
@@ -337,9 +337,6 @@ class Experiment:
                     scaler.scale(batch_loss).backward()
                     scaler.step(optimizer)
                     scaler.update()
-                    
-                    #batch_loss.backward()
-                    #optimizer.step()
 
                     torch.cuda.empty_cache()
 
