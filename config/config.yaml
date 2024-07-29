@@ -24,12 +24,12 @@ pythia70m:
   naming_conv:
     base: "gpt_neox.layers."
     layers: 
-      block1: "input_layernorm.weight"
-      block2: "post_attention_layernorm.weight.weight"
-      block3: "attention.query_key_value.weight"
-      block4: "attention.dense.weight"
-      block5: "mlp.dense_h_to_4h.weight"
-      block6: "mlp.dense_4h_to_h.weight"
+      #block1: "input_layernorm.weight"
+      #block2: "post_attention_layernorm.weight"
+      block1: "attention.query_key_value.weight"
+      block2: "attention.dense.weight"
+      block3: "mlp.dense_h_to_4h.weight"
+      block4: "mlp.dense_4h_to_h.weight"
 
 
 gptj: 
