@@ -20,7 +20,7 @@ outputs:
 pythia70m:
   name: "Pythia-70M"
   type: "decoder"
-  num_layers: 6
+  num_layers: 12
   naming_conv:
     base: "gpt_neox.layers."
     layers: 
