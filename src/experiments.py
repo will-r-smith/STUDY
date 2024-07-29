@@ -273,7 +273,7 @@ class Experiment:
 
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
             
-            results["norm"] = norm
+            results["norm"] = norm.item()
             results["relative_error"] = relative_error
 
             self.edited_model.to(self.device)
