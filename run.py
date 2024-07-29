@@ -25,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=10, help='Number of epochs in fine-tuning')
 
     parser.add_argument('--verbose', type=int, default=1, help='Verbosity')
+    parser.add_argument('--early_stoppping', type=int, default=1, help='Fine-tuning early stopping')
 
 
     args = parser.parse_args()

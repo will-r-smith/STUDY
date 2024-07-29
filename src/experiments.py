@@ -1,9 +1,12 @@
+import pandas as pd
+import numpy as np
 import torch
 from copy import deepcopy
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 import importlib
+import os
 
 from transformers import AutoTokenizer
 
@@ -243,11 +246,21 @@ class Experiment:
         parameters = self.get_parameters()
 
         for name, param in parameters:
+
+            results = {}
+
+            results["parameter"] = name
+            results["dataset_len"] = self.dataset_size
+            results["rate"] = self.args["rate"]
+            
+            results["learning_rate"] = self.args["learning_rate"]
+            
+            results["es"] = self.args["early_stopping"]
+            
             param.requires_grad = False
 
             print(f"\nPerforming invervention on: {name}")
             print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}\n")
-
 
             #del self.edited_model
             torch.cuda.empty_cache()
@@ -260,10 +273,17 @@ class Experiment:
 
             self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
             
+            results["norm"] = norm
+            results["relative_error"] = relative_error
+
             self.edited_model.to(self.device)
 
             edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
             
+            results["edited_loss"] = edited_loss
+            results["edited_top1_accuracy"] = edited_top1_accuracy
+            results["edited_top10_accuracy"] = edited_top10_accuracy
+
             torch.cuda.empty_cache()
 
             if self.args.verbose > 0:
@@ -287,6 +307,9 @@ class Experiment:
             scaler = torch.cuda.amp.GradScaler()
             self.edited_model.train()
 
+            es = 0
+            best_loss = np.inf
+            epoch_losses = []
 
             for epoch in range(self.args.num_epochs):
 
@@ -330,6 +353,7 @@ class Experiment:
 
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
+
                 if self.args.verbose > 0:
                     print(f"    Epoch {epoch} Loss: {epoch_loss}")
                 if self.args.verbose > 1:
@@ -338,9 +362,26 @@ class Experiment:
                     print(f"    Epoch {epoch} Top-10 Accuracy {epoch_top10_accuracy}")
 
 
-                # Write something to preserve the best model and return to this at the end
+                epoch_losses.append(epoch_loss)
+
+
+                if epoch_loss < best_loss:
+                    es = 0
+                    best_loss = epoch_loss
+                else:
+                    es +=1
+
+
+                if es > self.args["early_stopping"]:
+                    break
+
+            results["epoch_losses"] = str(epoch_losses)
 
             final_loss, final_top1_accuracy, final_top10_accuracy = self.evaluate(self.edited_model, self.X, self.y)
+
+            results["final_loss"] = final_loss
+            results["final_top1_accuracy"] = final_top1_accuracy
+            results["final_top10_accuracy"] = final_top10_accuracy
 
             print(f"Finished fine-tuning layer: {name}")
 
@@ -351,242 +392,26 @@ class Experiment:
             if self.args.verbose > 2:
                 print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
 
-                    
-
-
-
-
-"""
-    def fine_tune(self):
-
-        torch.cuda.empty_cache()
-
-        self.load_dataset()
-
-        self.loss_fn = torch.nn.CrossEntropyLoss()
-
-        original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X_val, self.y_val)
-
-
-        if self.args.verbose > 0:
-            print(f"Original Loss: {original_loss}")
-        if self.args.verbose > 1:
-            print(f"Original Top-1 Accuracy {original_top1_accuracy}")
-        if self.args.verbose > 2:
-            print(f"Original Top-10 Accuracy {original_top10_accuracy}")
-
-
-        parameters = self.get_parameters()
-
-        for name, param in parameters:
-
-            print(f"\nPerforming invervention on: {name}")
-
-            if self.args.verbose > 0:
-                print(f"  {self.config['Arguments']['intervention']['values'][self.args.intervention]}")
-
-            self.edited_model = deepcopy(self.original_model)
-
-            self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
-
-            edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
-            
-            if self.args.verbose > 0:
-                print(f"  Edited Loss: {edited_loss}")
-            if self.args.verbose > 1:
-                print(f"  Edited Top-1 Accuracy {edited_top1_accuracy}")
-            if self.args.verbose > 2:
-                print(f"  Edited Top-10 Accuracy {edited_top10_accuracy}")
-
-            # Ensure parameters have requires_grad=True
-            for param in self.trainable_parameters:
-                param.requires_grad = True
-
-            optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
-
-            if self.args.verbose > 3:
-                print(f"            P[0,0]:   {self.trainable_parameters[0].data[0, 0].item()}")
-
-            for epoch in range(self.args.num_epochs):
-
-                if self.args.verbose > 0:
-                    print(f"  \nEpoch {epoch}\n")
-
-                X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
-
-                for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
-
-                    my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
-
-                    batch_x = X_train_shuffled[i: i + my_batch_size]
-                    batch_y = y_train_shuffled[i: i + my_batch_size]
-                    
-                    input_ids, mask_ids, answer_ids = self.get_token_ids(batch_x, batch_y)
-
-                    torch.cuda.empty_cache()
-                    logits = self.edited_model(**input_ids).logits
-
-                    mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, logits.shape[2]])
-                    masked_logits = torch.gather(logits, index=mask_ids, dim=1)
-
-                    batch_loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
-
-                    if self.args.verbose > 3:
-                        print(f"        Batch loss: {batch_loss}")
-
-                    optimizer.zero_grad()
-                    batch_loss.backward()
-                    optimizer.step()
-
-                    torch.cuda.empty_cache()
-
-                if self.args.verbose > 3:
-                    print(self.trainable_parameters[0].data[0, 0].item())
-
-                epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
-
-                if self.args.verbose > 0:
-                    print(f"    Epoch {epoch} Loss: {epoch_loss}")
-                if self.args.verbose > 1:
-                    print(f"    Epoch {epoch} Top-1 Accuracy {epoch_top1_accuracy}")
-                if self.args.verbose > 2:
-                    print(f"    Epoch {epoch} Top-10 Accuracy {epoch_top10_accuracy}")
-
-
-                # Write something to preserve the best model and return to this at the end
-
-            final_loss, final_top1_accuracy, final_top10_accuracy = self.evaluate(self.edited_model, self.X, self.y)
-
-
-            print(f"Finished fine-tuning layer: {name}")
-
-            if self.args.verbose > 0:
-                print(f"  Final Loss: {final_loss}")
-            if self.args.verbose > 1:
-                print(f"  Final Top-1 Accuracy {final_top1_accuracy}")
-            if self.args.verbose > 2:
-                print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
+            self.terminate_and_save(results)
 
                     
 
+    def terminate_and_save(self, results):
+
+        path = f"outputs/results/{self.args.intervention}/{self.args.model}/{self.args.dataset}.csv"
+        
+        results_df = pd.DataFrame([results])
+
+        # Check if the CSV file exists and is not empty
+        if os.path.exists(path):
+            try:
+                existing_results_df = pd.read_csv(path)
+                df = pd.concat([existing_results_df, results_df], ignore_index=True)
+            except pd.errors.EmptyDataError:
+                df = results_df
+        else:
+            df = results_df
+
+        df.to_csv(path, index=False)
 
 
-
-
-    def get_token_ids(self, X, y):
-
-        input_ids = self.tokenizer(X, return_tensors="pt", padding="longest").to(self.device)
-
-        mask_token_id = self.tokenizer.convert_tokens_to_ids('<mask>')
-        mask_ids = (input_ids["input_ids"] == mask_token_id).float().argmax(dim=1)
-
-        answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
-
-        answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in answers]
-
-        answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
-
-        return input_ids, mask_ids, answer_ids[:,0]
-
-
-
-    def evaluate(self, model, X, y):
-        model.eval()  # set model to evaluation mode
-
-        total_loss = 0.0
-        total_top1_correct = 0
-        total_top10_correct = 0
-
-        input_ids, mask_ids, answer_ids = self.get_token_ids(X, y)
-
-        batch_size = 32
-
-
-        for i in tqdm(range(0, len(X), batch_size)):
-            my_batch_size = min(batch_size, len(X) - i)
-            batch_x = X[i: i + my_batch_size]
-            batch_y = y[i: i + my_batch_size]
-            input_ids, mask_ids, answer_ids = self.get_token_ids(batch_x, batch_y)
-
-            with torch.no_grad():
-                logits = model(**input_ids).logits
-
-            mask_ids = mask_ids.view(my_batch_size, 1, 1).expand([my_batch_size, 1, logits.shape[2]])
-            masked_logits = torch.gather(logits, index=mask_ids, dim=1)
-
-            loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
-            total_loss += loss.item()
-
-            top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (num_masked_tokens, top_k)
-
-            total_top1_correct += (top_tokens[:,0,0] == answer_ids).sum().item()
-            total_top10_correct += sum([answer_ids[j].item() in top_tokens[j,0,:].tolist() for j in range(len(answer_ids))])
-
-            torch.cuda.empty_cache()
-            
-            #decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
-            
-            
-            # Print or store the top 10 decoded tokens
-            for idx, tokens in enumerate(decoded_top_tokens):
-                print(batch_x[idx])
-                print(f"Answer: {self.tokenizer.decode(answer_ids[idx,0])}")
-                print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
-                print(top10_correct)
-
-            
-
-        # Compute average loss for the batch
-        average_loss = total_loss / (len(X) / batch_size)
-
-        # Compute accuracies
-        top1_accuracy = total_top1_correct / len(X)
-        top10_accuracy = total_top10_correct / len(X)
-
-        # Print or log the final metrics for the batch if needed
-        #print(f'Final loss for the batch: {average_loss}')
-        #print(f'Top-1 accuracy for the batch: {top1_accuracy}')
-        #print(f'Top-10 accuracy for the batch: {top10_accuracy}')
-
-        model.train()  # return model to train mode
-
-        return average_loss, top1_accuracy, top10_accuracy
-    
-
-
-
-
-
-
-
-    def get_token_ids(self, X, y):
-        input_ids_list = []
-        attention_mask_list = []
-        gold_answer_token_ids_list = []
-
-
-
-        with torch.no_grad():
-            for question, answer in zip(X, y):
-                #inputs = self.tokenizer(question, return_tensors="pt", padding='max_length', truncation=True, max_length=64).to(self.device)
-                inputs = self.tokenizer(question, return_tensors="pt").to(self.device)
-                #stripped_answer = answer.strip()
-                
-
-                input_ids_list.append(inputs.input_ids)
-                attention_mask_list.append(inputs.attention_mask)
-
-                gold_answer_token_ids = self.tokenizer(answer, return_tensors="pt", add_special_tokens=False).input_ids
-                #print(gold_answer_token_ids)
-                #gold_answer_token_id = int(gold_answer_token_ids[1])
-                gold_answer_token_ids_list.append(gold_answer_token_ids)
-
-        print(gold_answer_token_ids_list)
-        input_ids_tensor = torch.cat(input_ids_list, dim=0).to(self.device)
-        attention_mask_tensor = torch.cat(attention_mask_list, dim=0).to(self.device)
-        gold_answer_token_ids_tensor = torch.tensor(gold_answer_token_ids_list).to(self.device)
-
-        return input_ids_tensor, attention_mask_tensor, gold_answer_token_ids_tensor
-
-
-"""
