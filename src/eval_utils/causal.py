@@ -11,7 +11,7 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     #answer_ids = self.tokenizer(y, return_tensors="pt").input_ids  #.to(self.device)
 
-    answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in y]
+    answer_ids = [self.tokenizer(answer)["input_ids"][0] for answer in y]
 
     answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
 
