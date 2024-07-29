@@ -9,7 +9,12 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
 
     input_ids = self.tokenizer(X, return_tensors="pt", padding="longest", truncation=True).to(self.device)
 
-    answer_ids = self.tokenizer(y, return_tensors="pt").input_ids  #.to(self.device)
+    #answer_ids = self.tokenizer(y, return_tensors="pt").input_ids  #.to(self.device)
+
+    answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in y]
+
+    answer_ids = torch.LongTensor(answer_ids).unsqueeze(1).to(self.device)
+
 
     # Compute the lengths of the original input sequences
     input_lengths = [len(self.tokenizer.encode(x, truncation=True)) for x in X]
