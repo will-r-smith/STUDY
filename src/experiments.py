@@ -372,7 +372,7 @@ class Experiment:
                     es +=1
 
 
-                if es > self.args["early_stopping"]:
+                if es > self.args.early_stopping:
                     break
 
             results["epoch_losses"] = str(epoch_losses)
