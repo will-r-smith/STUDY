@@ -21,7 +21,7 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
     answer_ids = answer_ids[:,0]
 
     torch.cuda.empty_cache()
-    
+
     if requires_grad == False:
         with torch.no_grad():
             logits = model_eval(**input_ids).logits
@@ -33,7 +33,6 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
     masked_logits = torch.gather(logits, index=mask_ids, dim=1)
     loss = torch.nn.CrossEntropyLoss()(masked_logits[:,-1,:], answer_ids)
 
-    
 
     if get_accuracy == True:
         top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (batch_size, top_k)
