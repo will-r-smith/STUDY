@@ -16,7 +16,7 @@ from src.eval_utils.linguistics import classify_words
 from accelerate import Accelerator
 
 
-#from google.colab import drive
+from google.colab import drive
 from google.colab import files
 
 import spacy
@@ -33,7 +33,7 @@ class Experiment:
         # Load spaCy model
         #nlp = spacy.load("en_core_web_sm")
 
-        #drive.mount('/content/drive')
+        drive.mount('/content/drive')
 
         torch.cuda.empty_cache()
 
@@ -454,6 +454,6 @@ class Experiment:
 
         df.to_csv(path, index=False)
 
-        files.download(path)
+        files.download('/content/drive/My Drive/results.csv')
 
 
