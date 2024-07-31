@@ -1,16 +1,16 @@
 
 import torch
 
-def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accuracy):
+def generate_outputs(self, model_eval, X, y, requires_grad, get_accuracy):
 
-    bs = len(X_eval)
+    bs = len(X)
 
-    input_ids = self.tokenizer(X_eval, return_tensors="pt", padding="longest").to(self.device)
+    input_ids = self.tokenizer(X, return_tensors="pt", padding="longest").to(self.device)
 
     mask_token_id = self.tokenizer.convert_tokens_to_ids('<mask>')
     mask_ids = (input_ids["input_ids"] == mask_token_id).float().argmax(dim=1)
 
-    answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y_eval]
+    answers = [gold_answer if gold_answer.startswith(" ") else f" {gold_answer}" for gold_answer in y]
 
 
     answer_ids = [self.tokenizer(answer)["input_ids"][1] for answer in answers]
@@ -42,6 +42,12 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
         
         top1_words = [self.tokenizer.decode([token]) for token in top_tokens]
         top10_words = [[self.tokenizer.decode([token]) for token in tokens] for tokens in top_tokens]
+
+        
+        for idx, tokens in enumerate(top10_words):
+            print(y[idx])
+            print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
+        
 
         return loss.item(), top1_correct, top10_correct, top1_words, top10_words
 

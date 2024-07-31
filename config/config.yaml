@@ -19,7 +19,7 @@ outputs:
 # Model settings
 pythia160m:
   name: "Pythia-160M"
-  type: "decoder"
+  type: "causal"
   num_layers: 12
   naming_conv:
     base: "gpt_neox.layers."
@@ -34,7 +34,7 @@ pythia160m:
 
 pythia410m:
   name: "Pythia-410M"
-  type: "decoder"
+  type: "causal"
   num_layers: 24
   naming_conv:
     base: "gpt_neox.layers."
@@ -48,7 +48,7 @@ pythia410m:
 
 gptj: 
   name: "GPT-J"
-  type: "decoder"
+  type: "causal"
   num_layers: 28
   naming_conv:
     base: "transformer.h."
@@ -63,7 +63,7 @@ gptj:
 
 roberta_base:
   name: "RoBERTa_base"
-  type: "encoder_decoder"
+  type: "masked"
   num_layers: 12
   naming_conv:
     base: "roberta.encoder.layer."
@@ -78,7 +78,7 @@ roberta_base:
 
 roberta_large:
   name: "RoBERTa_large"
-  type: "encoder_decoder"
+  type: "masked"
   num_layers: 24
   naming_conv:
     base: "roberta.encoder.layer."

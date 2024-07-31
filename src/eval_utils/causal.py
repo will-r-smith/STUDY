@@ -58,15 +58,9 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
         top10_words = [[self.tokenizer.decode([token]) for token in tokens] for tokens in top_tokens]
 
         """
-
-        decoded_top_tokens = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
-        
-        for idx, tokens in enumerate(decoded_top_tokens):
-            print(X[idx])
-            print(f"Answer: {self.tokenizer.decode(answer_ids[idx])}")
+        for idx, tokens in enumerate(top10_words):
+            print(y[idx])
             print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
-            print(top10_correct)
-
         """
 
         return loss.item(), top1_correct, top10_correct, top1_words, top10_words

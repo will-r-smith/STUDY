@@ -133,7 +133,7 @@ class Experiment:
         module = importlib.import_module(f"src.data_utils.{self.args.dataset}")
         load_dataset = getattr(module, 'load_dataset')
 
-        self.X, self.y = load_dataset(self, self.args.model)
+        self.X, self.y = load_dataset(self, self.config[self.args.model]['type'])
 
         print("loaded dataset")
 
@@ -359,7 +359,7 @@ class Experiment:
             self.edited_model.train()
 
             es = 0
-            best_loss = np.inf
+            best_accuracy = np.inf
             epoch_losses = []
 
             for epoch in range(self.args.num_epochs):
@@ -407,13 +407,11 @@ class Experiment:
                 if self.args.verbose > 2:
                     print(f"    Epoch {epoch} Top-10 Accuracy {epoch_top10_accuracy}")
 
-
                 epoch_losses.append(epoch_loss)
 
-
-                if epoch_loss < best_loss:
+                if epoch_top10_accuracy > best_accuracy:
                     es = 0
-                    best_loss = epoch_loss
+                    best_accuracy = epoch_loss
                 else:
                     es +=1
 

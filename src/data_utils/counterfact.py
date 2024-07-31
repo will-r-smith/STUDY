@@ -25,7 +25,7 @@ def load_dataset(self, model_type):
     for i in range(len(dataset)):
         question, answer = dataset[i]
 
-        if model_type == "roberta":
+        if model_type == "masked":
             if question.endswith(" "):
                 question = f"{question}<mask>."
             else:
