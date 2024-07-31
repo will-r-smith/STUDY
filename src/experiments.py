@@ -397,14 +397,8 @@ class Experiment:
                 else:
                     es +=1
 
-
                 if es > self.args.early_stopping:
                     break
-
-
-                if epoch % 4 ==0:
-                    self.terminate_and_save(results)
-
 
             results["epoch_losses"] = str(epoch_losses)
 
