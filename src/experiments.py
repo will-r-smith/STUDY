@@ -382,7 +382,7 @@ class Experiment:
                     print(self.trainable_parameters[0].data[0, 0].item())
 
 
-                epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
+                epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy, _, _ = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
 
                 if self.args.verbose > 0:
