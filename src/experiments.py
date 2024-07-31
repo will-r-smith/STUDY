@@ -247,13 +247,6 @@ class Experiment:
         top1_accuracy = total_top1_correct / len(X)
         top10_accuracy = total_top10_correct / len(X)
 
-        top1_percentages = {}
-        top1_percentages = {}
-
-        for key in top10_frequencies:
-            top1_percentages[key] = top1_frequencies[key] / len(X)
-            top1_percentages[key] = top10_frequencies[key] / (len(X) *10)
-
         return average_loss, top1_accuracy, top10_accuracy, top1_frequencies, top10_frequencies
     
 
