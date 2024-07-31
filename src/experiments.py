@@ -240,7 +240,6 @@ class Experiment:
     def fine_tune(self):
 
         
-
         if self.args.model == "roberta":
             loc = "src.eval_utils.masked"
         else: 
@@ -436,7 +435,7 @@ class Experiment:
 
     def terminate_and_save(self, results):
 
-        path = f"outputs/results/{self.args.intervention}/{self.args.model}/{self.args.dataset}.csv"
+        path = f"/content/drive/My Drive/project_results/{self.args.intervention}/{self.args.model}/{self.args.dataset}.csv"
         
         results_df = pd.DataFrame([results])
 
@@ -451,7 +450,5 @@ class Experiment:
             df = results_df
 
         df.to_csv(path, index=False)
-
-        files.download('/content/drive/My Drive/results.csv')
 
 
