@@ -106,8 +106,10 @@ class Experiment:
         self.accelerator = Accelerator()
         self.edited_model = self.accelerator.prepare(self.edited_model)
 
-            
+        for name, param in self.edited_model.named_parameters():
+            print(name)
 
+            
 
 
     def load_dataset(self):
