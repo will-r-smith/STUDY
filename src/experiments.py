@@ -206,6 +206,10 @@ class Experiment:
         total_top1_correct = 0
         total_top10_correct = 0
 
+        top1_all = []   
+        top10_all = []
+
+
         for i in tqdm(range(0, len(X), self.args.batch_size)):
 
             my_batch_size = min(self.args.batch_size, len(X) - i)
@@ -213,7 +217,10 @@ class Experiment:
             batch_x = X[i: i + my_batch_size]
             batch_y = y[i: i + my_batch_size]
 
-            batch_loss, top1_correct, top10_correct = self.generate_outputs(self, model, batch_x, batch_y, False, True)
+            batch_loss, top1_correct, top10_correct, top1_words, top10_words = self.generate_outputs(self, model, batch_x, batch_y, False, True)
+
+            top1_all.extend(top1_words)
+            top10_all.extend([word for sublist in top10_words for word in sublist])
 
             total_loss += batch_loss
             total_top1_correct += top1_correct
