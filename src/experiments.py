@@ -26,12 +26,12 @@ class Experiment:
 
     def __init__(self, args, config):
 
-        nltk.download('averaged_perceptron_tagger')
-        nltk.download('punkt')
-        nltk.download('stopwords')
+        #nltk.download('averaged_perceptron_tagger')
+        #nltk.download('punkt')
+        #nltk.download('stopwords')
 
         # Load spaCy model
-        nlp = spacy.load("en_core_web_sm")
+        #nlp = spacy.load("en_core_web_sm")
 
         drive.mount('/content/drive')
 
