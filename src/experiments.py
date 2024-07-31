@@ -200,23 +200,8 @@ class Experiment:
     def evaluate(self, model, X, y):
         model.eval()
 
-        top1_frequencies = {
-            'common_nouns': 0,
-            'proper_nouns': 0,
-            'verbs': 0,
-            'modal_verbs': 0,
-            'adjectives': 0,
-            'adverbs': 0,
-            'determiners': 0,
-            'conjunctions': 0,
-            'prepositions': 0,
-            'pronouns': 0,
-            'interjections': 0,
-            'numerals': 0,
-            'function_words': 0
-        }
-
-        top10_frequencies = top1_frequencies.copy()
+        top1_all = []
+        top10_all = []
 
         total_loss = 0.0
         total_top1_correct = 0
@@ -232,19 +217,18 @@ class Experiment:
 
             batch_loss, top1_correct, top10_correct, top1_words, top10_words = self.generate_outputs(self, model, batch_x, batch_y, False, True)
 
-            top1_categories = str(classify_words(top1_words))
-            top10_categories = str(classify_words(top10_words))
-
-            for key in top10_frequencies:
-                top1_frequencies[key] += top1_categories[key]
-                top10_frequencies[key] += top10_categories[key]
-
+            top1_all.extend(top1_words)
+            top10_all.extend([word for sublist in top10_words for word in sublist])
+            
             total_loss += batch_loss
             total_top1_correct += top1_correct
             total_top10_correct += top10_correct
             
         # Compute average loss for the batch
         average_loss = total_loss / len(X)
+
+        top1_frequencies = classify_words(top1_all)
+        top10_frequencies = classify_words(top10_all)
 
         # Compute accuracies
         top1_accuracy = total_top1_correct / len(X)
@@ -277,8 +261,8 @@ class Experiment:
         original_results = {'original_loss': original_loss, 
                             'original_top1_accuracy': original_top1_accuracy, 
                             'original_top10_accuracy': original_top10_accuracy,
-                            'original_top1_words': original_top1_words,
-                            'original_top10_words': original_top10_words}
+                            'original_top1_words': str(original_top1_words),
+                            'original_top10_words': str(original_top10_words)}
 
 
         if self.args.verbose > 0:
