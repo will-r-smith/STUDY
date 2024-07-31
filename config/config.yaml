@@ -17,8 +17,8 @@ outputs:
 
 
 # Model settings
-pythia70m:
-  name: "Pythia-70M"
+pythia160m:
+  name: "Pythia-160M"
   type: "decoder"
   num_layers: 12
   naming_conv:
@@ -31,6 +31,20 @@ pythia70m:
       block3: "mlp.dense_h_to_4h.weight"
       block4: "mlp.dense_4h_to_h.weight"
 
+
+pythia410m:
+  name: "Pythia-410M"
+  type: "decoder"
+  num_layers: 24
+  naming_conv:
+    base: "gpt_neox.layers."
+    layers: 
+      #block1: "input_layernorm.weight"
+      #block2: "post_attention_layernorm.weight"
+      block1: "attention.query_key_value.weight"
+      block2: "attention.dense.weight"
+      block3: "mlp.dense_h_to_4h.weight"
+      block4: "mlp.dense_4h_to_h.weight"
 
 gptj: 
   name: "GPT-J"
@@ -47,8 +61,8 @@ gptj:
       block6: ".mlp.fc_out.weight"
 
 
-roberta:
-  name: "RoBERTa"
+roberta_base:
+  name: "RoBERTa_base"
   type: "encoder_decoder"
   num_layers: 12
   naming_conv:
@@ -61,6 +75,20 @@ roberta:
       block5: "intermediate.dense.weight"
       block6: "output.dense.weight"
 
+
+roberta_large:
+  name: "RoBERTa_large"
+  type: "encoder_decoder"
+  num_layers: 24
+  naming_conv:
+    base: "roberta.encoder.layer."
+    layers: 
+      block1: "attention.self.key.weight"
+      block2: "attention.self.query.weight"
+      block3: "attention.self.value.weight"
+      block4: "attention.output.dense.weight"
+      block5: "intermediate.dense.weight"
+      block6: "output.dense.weight"
 
 Arguments:
   lname:
