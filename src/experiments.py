@@ -232,9 +232,12 @@ class Experiment:
 
             batch_loss, top1_correct, top10_correct, top1_words, top10_words = self.generate_outputs(self, model, batch_x, batch_y, False, True)
 
+            top1_categories = str(classify_words(top1_words))
+            top10_categories = str(classify_words(top10_words))
+
             for key in top10_frequencies:
-                top1_frequencies[key] += top1_words[key]
-                top10_frequencies[key] += top10_words[key]
+                top1_frequencies[key] += top1_categories[key]
+                top10_frequencies[key] += top10_categories[key]
 
             total_loss += batch_loss
             total_top1_correct += top1_correct
@@ -269,15 +272,13 @@ class Experiment:
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
         original_loss, original_top1_accuracy, original_top10_accuracy, original_top1_words, original_top10_words = self.evaluate(self.original_model, self.X_val, self.y_val)
-        
-        edited_top1_categories = str(classify_words(original_top1_words))
-        edited_top10_categories = str(classify_words(original_top10_words))
+    
 
         original_results = {'original_loss': original_loss, 
                             'original_top1_accuracy': original_top1_accuracy, 
                             'original_top10_accuracy': original_top10_accuracy,
-                            'edited_top1_categories': edited_top1_categories,
-                            'edited_top10_categories': edited_top10_categories}
+                            'original_top1_words': original_top1_words,
+                            'original_top10_words': original_top10_words}
 
 
         if self.args.verbose > 0:
@@ -322,14 +323,13 @@ class Experiment:
             self.edited_model.to(self.device)
 
             edited_loss, edited_top1_accuracy, edited_top10_accuracy, edited_top1_words, edited_top10_words = self.evaluate(self.edited_model, self.X_val, self.y_val)
-            edited_top1_categories = str(classify_words(edited_top1_words))
-            edited_top10_categories = str(classify_words(edited_top10_words))
+
 
             results["edited_loss"] = edited_loss
             results["edited_top1_accuracy"] = edited_top1_accuracy
             results["edited_top10_accuracy"] = edited_top10_accuracy
-            results["edited_top1_categories"] = edited_top1_categories
-            results["edited_top10_categories"] = edited_top10_categories
+            results["edited_top1_categories"] = edited_top1_words
+            results["edited_top10_categories"] = edited_top10_words
 
             torch.cuda.empty_cache()
 
@@ -425,14 +425,13 @@ class Experiment:
             results["epoch_losses"] = str(epoch_losses)
 
             final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X, self.y)
-            finally_top1_categories = str(classify_words(final_top1_words))
-            final_top10_categories = str(classify_words(final_top10_words))
+
 
             results["final_loss"] = final_loss
             results["final_top1_accuracy"] = final_top1_accuracy
             results["final_top10_accuracy"] = final_top10_accuracy
-            results["finally_top1_categories"] = finally_top1_categories
-            results["final_top10_categories"] = final_top10_categories
+            results["finally_top1_categories"] = final_top1_words
+            results["final_top10_categories"] = final_top10_words
 
             print(f"Finished fine-tuning layer: {name}")
 
