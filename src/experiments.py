@@ -235,7 +235,7 @@ class Experiment:
 
           # return model to train mode
 
-        return average_loss, top1_accuracy, top10_accuracy
+        return average_loss, top1_accuracy, top10_accuracy, top1_all, top10_all
     
 
 
