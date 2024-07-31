@@ -60,14 +60,14 @@ class Experiment:
         if self.args.verbose > 0:
             print("\nLoading model...")
 
-        if self.args.model == "roberta":
+        if self.args.model == "roberta_base":
             from transformers import RobertaForMaskedLM
             llm_name = "roberta-base"
             model = RobertaForMaskedLM.from_pretrained(llm_name, cache_dir='./cache')
             
-        elif self.args.model == "pythia70m":
+        elif self.args.model == "pythia160m":
             from transformers import AutoModelForCausalLM
-            llm_name = "EleutherAI/pythia-160m-deduped-v0"
+            llm_name = "EleutherAI/pythia-160m-deduped"
             model = AutoModelForCausalLM.from_pretrained(llm_name, cache_dir='./cache')
         
         elif self.args.model == "gptj":
@@ -79,6 +79,17 @@ class Experiment:
                 torch_dtype=torch.float16,
                 cache_dir='./cache',
             ) 
+
+        elif self.args.model == "roberta_large":
+            from transformers import RobertaForMaskedLM
+            llm_name = "roberta-large"
+            model = RobertaForMaskedLM.from_pretrained(llm_name, cache_dir='./cache')
+
+        elif self.args.model == "pythia410m":
+            from transformers import AutoModelForCausalLM
+            llm_name = "EleutherAI/pythia-410m-deduped"
+            model = AutoModelForCausalLM.from_pretrained(llm_name, cache_dir='./cache')
+
 
         self.llm_name = llm_name   
 

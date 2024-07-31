@@ -8,7 +8,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process Arguments for experiments with Roberta LLM on CounterFact')
 
     parser.add_argument('--test', type=str, default="intervene", choices=['intervene', 'fine_tune'])
-    parser.add_argument('--model', type=str, default="roberta", choices=['pythia70m', 'roberta', 'gptj'], help="Which model to evaluate")
+    parser.add_argument('--model', type=str, default="roberta", choices=['pythia160m', 'roberta_base', 'gptj','pythia410m', 'roberta_large'], help="Which model to evaluate")
     
     parser.add_argument('--intervention', type=str, default="lr", choices=['dropout', 'lr', 'mm'], help="what type of intervention to perform")
     parser.add_argument('--rate', type=float, default=1, help='rates for intervention')
