@@ -11,13 +11,30 @@ import os
 from transformers import AutoTokenizer
 
 from src.matrix_utils import norms, do_lr, do_mm
+from src.eval_utils.linguistics import classify_words
 
 from accelerate import Accelerator
 
 
+from google.colab import drive
+from google.colab import files
+
+import spacy
+import nltk
+
 class Experiment:
 
     def __init__(self, args, config):
+
+        nltk.download('averaged_perceptron_tagger')
+        nltk.download('punkt')
+        nltk.download('stopwords')
+
+        # Load spaCy model
+        nlp = spacy.load("en_core_web_sm")
+
+        drive.mount('/content/drive')
+
         torch.cuda.empty_cache()
 
         self.args = args
@@ -233,9 +250,17 @@ class Experiment:
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
 
-        original_loss, original_top1_accuracy, original_top10_accuracy = self.evaluate(self.original_model, self.X_val, self.y_val)
+        original_loss, original_top1_accuracy, original_top10_accuracy, original_top1_words, original_top10_words = self.evaluate(self.original_model, self.X_val, self.y_val)
+        
+        edited_top1_categories = str(classify_words(original_top1_words))
+        edited_top10_categories = str(classify_words(original_top10_words))
 
-        original_results = {'original_loss': original_loss, 'original_top1_accuracy': original_top1_accuracy, 'original_top10_accuracy': original_top10_accuracy}
+        original_results = {'original_loss': original_loss, 
+                            'original_top1_accuracy': original_top1_accuracy, 
+                            'original_top10_accuracy': original_top10_accuracy,
+                            'edited_top1_categories': edited_top1_categories,
+                            'edited_top10_categories': edited_top10_categories}
+
 
         if self.args.verbose > 0:
             print(f"Original Loss: {original_loss}")
@@ -253,9 +278,7 @@ class Experiment:
             results["parameter"] = name
             results["dataset_len"] = self.dataset_size
             results["rate"] = self.args.rate
-            
             results["learning_rate"] = self.args.learning_rate
-            
             results["es"] = self.args.early_stopping
             
             param.requires_grad = False
@@ -280,11 +303,15 @@ class Experiment:
 
             self.edited_model.to(self.device)
 
-            edited_loss, edited_top1_accuracy, edited_top10_accuracy = self.evaluate(self.edited_model, self.X_val, self.y_val)
-            
+            edited_loss, edited_top1_accuracy, edited_top10_accuracy, edited_top1_words, edited_top10_words = self.evaluate(self.edited_model, self.X_val, self.y_val)
+            edited_top1_categories = str(classify_words(edited_top1_words))
+            edited_top10_categories = str(classify_words(edited_top10_words))
+
             results["edited_loss"] = edited_loss
             results["edited_top1_accuracy"] = edited_top1_accuracy
             results["edited_top10_accuracy"] = edited_top10_accuracy
+            results["edited_top1_categories"] = edited_top1_categories
+            results["edited_top10_categories"] = edited_top10_categories
 
             torch.cuda.empty_cache()
 
@@ -372,13 +399,22 @@ class Experiment:
                 if es > self.args.early_stopping:
                     break
 
+
+                if epoch % 4 ==0:
+                    self.terminate_and_save(results)
+
+
             results["epoch_losses"] = str(epoch_losses)
 
-            final_loss, final_top1_accuracy, final_top10_accuracy = self.evaluate(self.edited_model, self.X, self.y)
+            final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X, self.y)
+            finally_top1_categories = str(classify_words(final_top1_words))
+            final_top10_categories = str(classify_words(final_top10_words))
 
             results["final_loss"] = final_loss
             results["final_top1_accuracy"] = final_top1_accuracy
             results["final_top10_accuracy"] = final_top10_accuracy
+            results["finally_top1_categories"] = finally_top1_categories
+            results["final_top10_categories"] = final_top10_categories
 
             print(f"Finished fine-tuning layer: {name}")
 
@@ -410,5 +446,7 @@ class Experiment:
             df = results_df
 
         df.to_csv(path, index=False)
+
+        files.download(path)
 
 

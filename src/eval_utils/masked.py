@@ -38,9 +38,12 @@ def generate_outputs(self, model_eval, X_eval, y_eval, requires_grad, get_accura
         top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (batch_size, top_k)
 
         top1_correct = (top_tokens[:,0,0] == answer_ids).sum().item()
-        top10_correct = sum([answer_ids[j].item() in top_tokens[j].tolist() for j in range(len(answer_ids))])
+        top10_correct = sum([answer_ids[j].item() in top_tokens[j,:,0].tolist() for j in range(len(answer_ids))])
+        
+        top1_words = [self.tokenizer.decode([token]) for token in top_tokens]
+        top10_words = [[self.tokenizer.decode([token]) for token in tokens] for tokens in top_tokens]
 
-        return loss.item(), top1_correct, top10_correct
+        return loss.item(), top1_correct, top10_correct, top1_words, top10_words
 
     else: 
 
