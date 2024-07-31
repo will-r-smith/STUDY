@@ -200,12 +200,27 @@ class Experiment:
     def evaluate(self, model, X, y):
         model.eval()
 
+        top1_frequencies = {
+            'common_nouns': 0,
+            'proper_nouns': 0,
+            'verbs': 0,
+            'modal_verbs': 0,
+            'adjectives': 0,
+            'adverbs': 0,
+            'determiners': 0,
+            'conjunctions': 0,
+            'prepositions': 0,
+            'pronouns': 0,
+            'interjections': 0,
+            'numerals': 0,
+            'function_words': 0
+        }
+
+        top10_frequencies = top1_frequencies.copy()
+
         total_loss = 0.0
         total_top1_correct = 0
         total_top10_correct = 0
-
-        top1_all = []   
-        top10_all = []
 
 
         for i in tqdm(range(0, len(X), self.args.batch_size)):
@@ -217,8 +232,9 @@ class Experiment:
 
             batch_loss, top1_correct, top10_correct, top1_words, top10_words = self.generate_outputs(self, model, batch_x, batch_y, False, True)
 
-            top1_all.extend(top1_words)
-            top10_all.extend([word for sublist in top10_words for word in sublist])
+            for key in top10_frequencies:
+                top1_frequencies[key] += top1_words[key]
+                top10_frequencies[key] += top10_words[key]
 
             total_loss += batch_loss
             total_top1_correct += top1_correct
@@ -231,9 +247,14 @@ class Experiment:
         top1_accuracy = total_top1_correct / len(X)
         top10_accuracy = total_top10_correct / len(X)
 
-          # return model to train mode
+        top1_percentages = {}
+        top1_percentages = {}
 
-        return average_loss, top1_accuracy, top10_accuracy, top1_all, top10_all
+        for key in top10_frequencies:
+            top1_percentages[key] = top1_frequencies[key] / len(X)
+            top1_percentages[key] = top10_frequencies[key] / (len(X) *10)
+
+        return average_loss, top1_accuracy, top10_accuracy, top1_frequencies, top10_frequencies
     
 
 
