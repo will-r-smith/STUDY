@@ -122,7 +122,7 @@ class Experiment:
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_name)
 
-        if self.args.model in ["pythia70m", "gptj"]:
+        if self.args.model in ["pythia160m", "gptj", "pythia410m"]:
             # Add padding and mask token if they don't exist
             self.tokenizer.add_special_tokens({
                 'pad_token': self.tokenizer.eos_token,
