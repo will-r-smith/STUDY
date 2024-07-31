@@ -17,12 +17,15 @@ from accelerate import Accelerator
 
 from google.colab import files
 
+import nltk
+
+import spacy
+
 nltk.download('averaged_perceptron_tagger')
 nltk.download('punkt')
 nltk.download('stopwords')
 
-import spacy
-import nltk
+
 
 class Experiment:
 
