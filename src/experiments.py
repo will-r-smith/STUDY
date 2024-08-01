@@ -409,7 +409,7 @@ class Experiment:
 
                 epoch_losses.append(epoch_loss)
 
-                if epoch_loss > best_loss:
+                if epoch_loss < best_loss:
                     es = 0
                     best_loss = epoch_loss
                 else:
