@@ -1,6 +1,6 @@
 import pickle
 
-def load_dataset(self, model_type):
+def get_dataset(self, model_type):
 
     with open("data/counterfact", "rb") as f:
         data = pickle.load(f)

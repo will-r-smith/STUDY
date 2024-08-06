@@ -15,7 +15,7 @@ from src.eval_utils.linguistics import classify_words
 
 from accelerate import Accelerator
 
-from google.colab import files
+#from google.colab import files
 
 import nltk
 
@@ -131,9 +131,9 @@ class Experiment:
             self.original_model.resize_token_embeddings(len(self.tokenizer))
 
         module = importlib.import_module(f"src.data_utils.{self.args.dataset}")
-        load_dataset = getattr(module, 'load_dataset')
+        get_dataset = getattr(module, 'get_dataset')
 
-        self.X, self.y = load_dataset(self, self.config[self.args.model]['type'])
+        self.X, self.y = get_dataset(self, self.config[self.args.model]['type'])
 
         print("loaded dataset")
 
@@ -199,7 +199,6 @@ class Experiment:
         diff_norm, relative_error = norms(original_mat_tensor.type(torch.float32), approx_mat)
 
         return model, parameters, diff_norm, relative_error
-
 
 
 
@@ -438,7 +437,7 @@ class Experiment:
             if self.args.verbose > 2:
                 print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
 
-            self.terminate_and_save(results)
+            #self.terminate_and_save(results)
 
                     
 
