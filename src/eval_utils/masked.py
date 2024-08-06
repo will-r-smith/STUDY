@@ -44,7 +44,7 @@ def generate_outputs(self, model_eval, X, y, requires_grad, get_accuracy):
         top10_correct = sum([answer_ids[j].item() in top_tokens[j, 0, :].tolist() for j in range(len(answer_ids))])
         
         top1_words = [self.tokenizer.decode([token.item()]) for token in top1_predictions]
-        top10_words = [[self.tokenizer.decode([token]) for token in tokens] for tokens in top_tokens]
+        top10_words = [[self.tokenizer.decode(token) for token in tokens] for tokens in top_tokens]
 
         #top1_words = [self.tokenizer.decode([token]) for token in top1_predictions]
         #top10_words = [[self.tokenizer.decode([token]) for token in tokens] for tokens in top_tokens]
