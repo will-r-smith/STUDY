@@ -516,9 +516,13 @@ class Experiment:
 
             self.edited_model.to(self.device)
 
+
+            layer = self.edited_model
+            for part in name.split('.')[:-1]:
+                layer = getattr(layer, part)
         
 
-            optimizer = torch.optim.Adam(getattr(self.edited_model, name), lr=self.args.learning_rate)
+            optimizer = torch.optim.Adam(layer, lr=self.args.learning_rate)
             optimizer = self.accelerator.prepare(optimizer)
 
             scaler = torch.cuda.amp.GradScaler()
