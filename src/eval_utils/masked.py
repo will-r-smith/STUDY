@@ -36,7 +36,9 @@ def generate_outputs(self, model_eval, X, y, requires_grad, get_accuracy):
 
     if get_accuracy == True:
         top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (batch_size, top_k)
-        top1_predictions = top_tokens[:,0]
+        print(top_tokens.shape)
+        
+        top1_predictions = top_tokens[:, 0, 0]
 
         top1_correct = (top1_predictions == answer_ids).sum().item()
         top10_correct = sum([answer_ids[j].item() in top_tokens[j].tolist() for j in range(len(answer_ids))])
