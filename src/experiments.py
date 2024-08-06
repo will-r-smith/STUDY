@@ -260,7 +260,7 @@ class Experiment:
     def fine_tune(self):
 
         
-        if self.args.model == "roberta":
+        if self.args.model in ["roberta_base", "roberta_large"]:
             loc = "src.eval_utils.masked"
         else: 
             loc = "src.eval_utils.causal"
