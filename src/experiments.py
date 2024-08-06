@@ -522,7 +522,7 @@ class Experiment:
                 layer = getattr(layer, part)
         
 
-            optimizer = torch.optim.Adam([layer], lr=self.args.learning_rate)
+            optimizer = torch.optim.Adam([param], lr=self.args.learning_rate)
             optimizer = self.accelerator.prepare(optimizer)
 
             scaler = torch.cuda.amp.GradScaler()
