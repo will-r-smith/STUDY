@@ -517,10 +517,11 @@ class Experiment:
             self.edited_model.to(self.device)
 
 
-            layer = self.edited_model
-            for part in name.split('.')[:-1]:
-                layer = getattr(layer, part)
-        
+            for p in self.edited_model.parameters():
+                p.requires_grad = False
+
+            # Set the specific parameters to require gradients
+            param.requires_grad = True
 
             optimizer = torch.optim.Adam([param], lr=self.args.learning_rate)
             optimizer = self.accelerator.prepare(optimizer)
