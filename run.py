@@ -38,6 +38,8 @@ if __name__ == '__main__':
         exp.intervene()
 
     if args.test == 'fine_tune':
-        #exp.intervene()
-        exp.fine_tune()
+        if args.intervention == "none":
+            exp.simple_fine_tune()
+        else:
+            exp.fine_tune()
 
