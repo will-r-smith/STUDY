@@ -60,10 +60,12 @@ def generate_outputs(self, model_eval, X, y, requires_grad, get_accuracy):
             print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
             print(top10_correct)
 
-        """
+        
         for idx, tokens in enumerate(top10_words):
             print(y[idx])
             print(f'Top 10 tokens for masked position {idx} in batch: {tokens}')
+
+        """
         
 
         return loss.item(), top1_correct, top10_correct, top1_words, top10_words
