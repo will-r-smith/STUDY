@@ -516,8 +516,9 @@ class Experiment:
 
             self.edited_model.to(self.device)
 
+        
 
-            optimizer = torch.optim.Adam(param, lr=self.args.learning_rate)
+            optimizer = torch.optim.Adam(getattr(self.edited_model, name), lr=self.args.learning_rate)
             optimizer = self.accelerator.prepare(optimizer)
 
             scaler = torch.cuda.amp.GradScaler()
