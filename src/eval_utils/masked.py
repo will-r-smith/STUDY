@@ -36,7 +36,7 @@ def generate_outputs(self, model_eval, X, y, requires_grad, get_accuracy):
 
     if get_accuracy == True:
         top_tokens = torch.topk(masked_logits, 10, dim=-1).indices  # shape: (batch_size, top_k)
-        print(top_tokens.shape)
+
         
         top1_predictions = top_tokens[:, 0, 0]
 

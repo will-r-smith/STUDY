@@ -437,7 +437,7 @@ class Experiment:
             if self.args.verbose > 2:
                 print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
 
-            #self.terminate_and_save(results)
+            self.terminate_and_save(results)
 
                     
 
