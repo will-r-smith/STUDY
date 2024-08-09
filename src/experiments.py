@@ -461,141 +461,141 @@ class Experiment:
 
 
 
-def simple_fine_tune(self):
-    if self.args.model in ["roberta_base", "roberta_large"]:
-        loc = "src.eval_utils.masked"
-    else:
-        loc = "src.eval_utils.causal"
+    def simple_fine_tune(self):
+        if self.args.model in ["roberta_base", "roberta_large"]:
+            loc = "src.eval_utils.masked"
+        else:
+            loc = "src.eval_utils.causal"
 
-    module = importlib.import_module(loc)
-    self.generate_outputs = getattr(module, 'generate_outputs')
+        module = importlib.import_module(loc)
+        self.generate_outputs = getattr(module, 'generate_outputs')
 
-    torch.cuda.empty_cache()
-
-    self.load_dataset()
-
-    self.loss_fn = torch.nn.CrossEntropyLoss()
-
-    original_loss, original_top1_accuracy, original_top10_accuracy, original_top1_words, original_top10_words = self.evaluate(self.original_model, self.X_val, self.y_val)
-
-    original_results = {
-        'original_loss': original_loss, 
-        'original_top1_accuracy': original_top1_accuracy, 
-        'original_top10_accuracy': original_top10_accuracy,
-        'original_top1_words': str(original_top1_words),
-        'original_top10_words': str(original_top10_words)
-    }
-
-    if self.args.verbose > 0:
-        print(f"Original Loss: {original_loss}")
-    if self.args.verbose > 1:
-        print(f"Original Top-1 Accuracy {original_top1_accuracy}")
-    if self.args.verbose > 2:
-        print(f"Original Top-10 Accuracy {original_top10_accuracy}")
-
-    parameters = self.get_parameters()
-
-    for name, param in parameters:
-        results = original_results.copy()
-
-        results["parameter"] = name
-        results["dataset_len"] = self.dataset_size
-        results["learning_rate"] = self.args.learning_rate
-        results["es"] = self.args.early_stopping
-            
         torch.cuda.empty_cache()
 
-        # Deep copy the original model and move it to the device
-        self.edited_model = deepcopy(self.original_model).to(self.device)
+        self.load_dataset()
 
-        # Set all parameters to not require gradients
-        for p in self.edited_model.parameters():
-            p.requires_grad = False
+        self.loss_fn = torch.nn.CrossEntropyLoss()
 
-        # Find the specific parameter in the edited model and set requires_grad=True
-        trainable_param = None
-        for n, p in self.edited_model.named_parameters():
-            if n == name:
-                p.requires_grad = True
-                trainable_param = p
-                break
+        original_loss, original_top1_accuracy, original_top10_accuracy, original_top1_words, original_top10_words = self.evaluate(self.original_model, self.X_val, self.y_val)
 
-        if trainable_param is None:
-            raise ValueError(f"Parameter {name} not found in the model")
-
-        optimizer = torch.optim.Adam([trainable_param], lr=self.args.learning_rate)
-        optimizer = self.accelerator.prepare(optimizer)
-
-        scaler = torch.cuda.amp.GradScaler()
-        self.edited_model.train()
-
-        es = 0
-        best_loss = float('inf')
-        epoch_losses = []
-
-        for epoch in range(self.args.num_epochs):
-            if self.args.verbose > 0:
-                print(f"  \nEpoch {epoch}\n")
-
-            X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
-
-            for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
-                my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
-
-                batch_x = X_train_shuffled[i: i + my_batch_size]
-                batch_y = y_train_shuffled[i: i + my_batch_size]
-
-                optimizer.zero_grad()
-
-                with torch.cuda.amp.autocast():
-                    batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
-
-                if not batch_loss.requires_grad:
-                    raise RuntimeError("batch_loss does not require gradients. Check the model's parameter setup.")
-
-                scaler.scale(batch_loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
-
-                torch.cuda.empty_cache()
-
-            epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy, _, _ = self.evaluate(self.edited_model, self.X_val, self.y_val)
-
-            if self.args.verbose > 0:
-                print(f"    Epoch {epoch} Loss: {epoch_loss}")
-            if self.args.verbose > 1:
-                print(f"    Epoch {epoch} Top-1 Accuracy {epoch_top1_accuracy}")
-            if self.args.verbose > 2:
-                print(f"    Epoch {epoch} Top-10 Accuracy {epoch_top10_accuracy}")
-
-            epoch_losses.append(epoch_loss)
-
-            if epoch_loss < best_loss:
-                es = 0
-                best_loss = epoch_loss
-            else:
-                es += 1
-
-            if es > self.args.early_stopping:
-                break
-
-        results["epoch_losses"] = str(epoch_losses)
-
-        final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X, self.y)
-
-        results["final_loss"] = final_loss
-        results["final_top1_accuracy"] = final_top1_accuracy
-        results["final_top10_accuracy"] = final_top10_accuracy
-        results["finally_top1_categories"] = final_top1_words
-        results["final_top10_categories"] = final_top10_words
-
-        print(f"Finished fine-tuning layer: {name}")
+        original_results = {
+            'original_loss': original_loss, 
+            'original_top1_accuracy': original_top1_accuracy, 
+            'original_top10_accuracy': original_top10_accuracy,
+            'original_top1_words': str(original_top1_words),
+            'original_top10_words': str(original_top10_words)
+        }
 
         if self.args.verbose > 0:
-            print(f"  Final Loss: {final_loss}")
+            print(f"Original Loss: {original_loss}")
         if self.args.verbose > 1:
-                print(f"  Final Top-1 Accuracy {final_top1_accuracy}")
+            print(f"Original Top-1 Accuracy {original_top1_accuracy}")
         if self.args.verbose > 2:
-            print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
+            print(f"Original Top-10 Accuracy {original_top10_accuracy}")
 
-        self.terminate_and_save(results)
+        parameters = self.get_parameters()
+
+        for name, param in parameters:
+            results = original_results.copy()
+
+            results["parameter"] = name
+            results["dataset_len"] = self.dataset_size
+            results["learning_rate"] = self.args.learning_rate
+            results["es"] = self.args.early_stopping
+                
+            torch.cuda.empty_cache()
+
+            # Deep copy the original model and move it to the device
+            self.edited_model = deepcopy(self.original_model).to(self.device)
+
+            # Set all parameters to not require gradients
+            for p in self.edited_model.parameters():
+                p.requires_grad = False
+
+            # Find the specific parameter in the edited model and set requires_grad=True
+            trainable_param = None
+            for n, p in self.edited_model.named_parameters():
+                if n == name:
+                    p.requires_grad = True
+                    trainable_param = p
+                    break
+
+            if trainable_param is None:
+                raise ValueError(f"Parameter {name} not found in the model")
+
+            optimizer = torch.optim.Adam([trainable_param], lr=self.args.learning_rate)
+            optimizer = self.accelerator.prepare(optimizer)
+
+            scaler = torch.cuda.amp.GradScaler()
+            self.edited_model.train()
+
+            es = 0
+            best_loss = float('inf')
+            epoch_losses = []
+
+            for epoch in range(self.args.num_epochs):
+                if self.args.verbose > 0:
+                    print(f"  \nEpoch {epoch}\n")
+
+                X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
+
+                for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
+                    my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
+
+                    batch_x = X_train_shuffled[i: i + my_batch_size]
+                    batch_y = y_train_shuffled[i: i + my_batch_size]
+
+                    optimizer.zero_grad()
+
+                    with torch.cuda.amp.autocast():
+                        batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
+
+                    if not batch_loss.requires_grad:
+                        raise RuntimeError("batch_loss does not require gradients. Check the model's parameter setup.")
+
+                    scaler.scale(batch_loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+
+                    torch.cuda.empty_cache()
+
+                epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy, _, _ = self.evaluate(self.edited_model, self.X_val, self.y_val)
+
+                if self.args.verbose > 0:
+                    print(f"    Epoch {epoch} Loss: {epoch_loss}")
+                if self.args.verbose > 1:
+                    print(f"    Epoch {epoch} Top-1 Accuracy {epoch_top1_accuracy}")
+                if self.args.verbose > 2:
+                    print(f"    Epoch {epoch} Top-10 Accuracy {epoch_top10_accuracy}")
+
+                epoch_losses.append(epoch_loss)
+
+                if epoch_loss < best_loss:
+                    es = 0
+                    best_loss = epoch_loss
+                else:
+                    es += 1
+
+                if es > self.args.early_stopping:
+                    break
+
+            results["epoch_losses"] = str(epoch_losses)
+
+            final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X, self.y)
+
+            results["final_loss"] = final_loss
+            results["final_top1_accuracy"] = final_top1_accuracy
+            results["final_top10_accuracy"] = final_top10_accuracy
+            results["finally_top1_categories"] = final_top1_words
+            results["final_top10_categories"] = final_top10_words
+
+            print(f"Finished fine-tuning layer: {name}")
+
+            if self.args.verbose > 0:
+                print(f"  Final Loss: {final_loss}")
+            if self.args.verbose > 1:
+                    print(f"  Final Top-1 Accuracy {final_top1_accuracy}")
+            if self.args.verbose > 2:
+                print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
+
+            self.terminate_and_save(results)
