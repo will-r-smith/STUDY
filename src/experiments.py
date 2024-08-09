@@ -520,9 +520,12 @@ class Experiment:
             for p in self.edited_model.parameters():
                 p.requires_grad = False
 
-            # Set the specific parameters to require gradients
-            param.requires_grad = True
-
+            # Find the specific parameter in the edited model and set requires_grad=True
+            for n, p in self.edited_model.named_parameters():
+                if n == name:
+                    p.requires_grad = True
+                    break
+                
             optimizer = torch.optim.Adam([param], lr=self.args.learning_rate)
             optimizer = self.accelerator.prepare(optimizer)
 
