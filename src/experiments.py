@@ -368,7 +368,7 @@ class Experiment:
 
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
-                optimizer, scaler = self.epoch_train(X_train_shuffled, y_train_shuffled)
+                self.epoch_train(X_train_shuffled, y_train_shuffled)
 
                 if self.args.verbose > 3:
                     print(self.trainable_parameters[0].data[0, 0].item())
