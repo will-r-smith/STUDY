@@ -257,8 +257,8 @@ class Experiment:
     
 
 
-    def fine_tune(self):
 
+    def fine_tune(self):
         
         if self.args.model in ["roberta_base", "roberta_large"]:
             loc = "src.eval_utils.masked"
@@ -348,13 +348,13 @@ class Experiment:
                 param.requires_grad = True
 
             optimizer = torch.optim.Adam(self.trainable_parameters, lr=self.args.learning_rate)
-            optimizer = self.accelerator.prepare(optimizer)
+            self.optimizer = self.accelerator.prepare(optimizer)
 
             if self.args.verbose > 3:
                 print(f"            P[0,0]:   {self.trainable_parameters[0].data[0, 0].item()}")
 
 
-            scaler = torch.cuda.amp.GradScaler()
+            self.scaler = torch.cuda.amp.GradScaler()
             self.edited_model.train()
 
             es = 0
@@ -368,29 +368,7 @@ class Experiment:
 
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
-                for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
-
-                    my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
-
-                    batch_x = X_train_shuffled[i: i + my_batch_size]
-                    batch_y = y_train_shuffled[i: i + my_batch_size]
-
-                    batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
-
-                    
-                    optimizer.zero_grad()
-
-                    torch.cuda.empty_cache()
-
-                    scaler.scale(batch_loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-
-                    torch.cuda.empty_cache()
-
-                    if self.args.verbose > 3:
-                        print(f"        Batch loss: {batch_loss}")
-
+                optimizer, scaler = self.epoch_train(X_train_shuffled, y_train_shuffled)
 
                 if self.args.verbose > 3:
                     print(self.trainable_parameters[0].data[0, 0].item())
@@ -461,6 +439,7 @@ class Experiment:
 
 
 
+
     def simple_fine_tune(self):
         if self.args.model in ["roberta_base", "roberta_large"]:
             loc = "src.eval_utils.masked"
@@ -524,9 +503,9 @@ class Experiment:
                 raise ValueError(f"Parameter {name} not found in the model")
 
             optimizer = torch.optim.Adam([trainable_param], lr=self.args.learning_rate)
-            optimizer = self.accelerator.prepare(optimizer)
+            self.optimizer = self.accelerator.prepare(optimizer)
 
-            scaler = torch.cuda.amp.GradScaler()
+            self.scaler = torch.cuda.amp.GradScaler()
             self.edited_model.train()
 
             es = 0
@@ -539,25 +518,7 @@ class Experiment:
 
                 X_train_shuffled, y_train_shuffled = shuffle(self.X_train, self.y_train)
 
-                for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
-                    my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
-
-                    batch_x = X_train_shuffled[i: i + my_batch_size]
-                    batch_y = y_train_shuffled[i: i + my_batch_size]
-
-                    optimizer.zero_grad()
-
-                    with torch.cuda.amp.autocast():
-                        batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
-
-                    if not batch_loss.requires_grad:
-                        raise RuntimeError("batch_loss does not require gradients. Check the model's parameter setup.")
-
-                    scaler.scale(batch_loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-
-                    torch.cuda.empty_cache()
+                self.epoch_train(X_train_shuffled, y_train_shuffled)
 
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy, _, _ = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
@@ -599,3 +560,25 @@ class Experiment:
                 print(f"  Final Top-10 Accuracy {final_top10_accuracy}")
 
             self.terminate_and_save(results)
+
+
+    def epoch_train(self, X_train_shuffled, y_train_shuffled):
+        for i in tqdm(range(0, len(self.X_train), self.args.batch_size)):
+            my_batch_size = min(self.args.batch_size, len(self.X_train) - i)
+
+            batch_x = X_train_shuffled[i: i + my_batch_size]
+            batch_y = y_train_shuffled[i: i + my_batch_size]
+
+            self.optimizer.zero_grad()
+
+            with torch.cuda.amp.autocast():
+                batch_loss = self.generate_outputs(self, self.edited_model, batch_x, batch_y, True, False)
+
+            self.scaler.scale(batch_loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+
+            torch.cuda.empty_cache()
+
+            if self.args.verbose > 3:
+                print(f"        Batch loss: {batch_loss}")
