@@ -10,7 +10,7 @@ import os
 
 from transformers import AutoTokenizer
 
-from src.matrix_utils import norms, do_lr, do_mm
+from src.matrix_utils import norms, do_lr, do_psm
 from src.eval_utils.linguistics import classify_words
 
 from accelerate import Accelerator
@@ -193,8 +193,8 @@ class Experiment:
         if self.args.intervention == "lr":
             model, approx_mat, parameters = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
-        elif self.args.intervention == "mm":
-            model, approx_mat = do_mm(original_mat)
+        elif self.args.intervention == "psm":
+            model, approx_mat = do_psm(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
         diff_norm, relative_error = norms(original_mat_tensor.type(torch.float32), approx_mat)
 
@@ -377,7 +377,7 @@ class Experiment:
                 epoch_loss, epoch_top1_accuracy, epoch_top10_accuracy, _, _ = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
 
-                if self.args.verbose > 0:
+                if self.args.verbose > 1:
                     print(f"    Epoch {epoch} Loss: {epoch_loss}")
                 if self.args.verbose > 1:
                     print(f"    Epoch {epoch} Top-1 Accuracy {epoch_top1_accuracy}")
