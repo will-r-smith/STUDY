@@ -129,7 +129,7 @@ Arguments:
     arg: "Type of intervention"
     values:
       lr: "Low rank approximation"
-      mm: "Monarch matrix approximation"
+      psm: "Sparse matrices"
 
 
 
