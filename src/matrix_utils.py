@@ -56,19 +56,29 @@ def viz_rank_change(rank_list,name):
 
 
 def do_lr(model, name, weight, k):
-    niter = 20
-
+    
     assert weight.ndim == 2
 
     max_rank = min(weight.shape[0], weight.shape[1])
     desired_rank = int(max_rank * k)
 
+    """
+    niter = 20
     results = torch.svd_lowrank(weight, q=desired_rank, niter=niter)
 
     U = results[0].clone().detach().requires_grad_(True).to(weight.dtype)
     S = torch.diag(results[1]).clone().detach().requires_grad_(True).to(weight.dtype)
     #S = results[1].clone().detach().requires_grad_(True).to(weight.dtype)
     Vt = results[2].T.clone().detach().requires_grad_(True).to(weight.dtype)
+    """
+
+    U_full, S_full, Vt_full = torch.svd(weight)
+
+    # Truncate to the desired rank
+    U = U_full[:, :desired_rank].clone().detach().requires_grad_(True).to(weight.dtype)
+    S = torch.diag(S_full[:desired_rank]).clone().detach().requires_grad_(True).to(weight.dtype)
+    Vt = Vt_full[:, :desired_rank].T.clone().detach().requires_grad_(True).to(weight.dtype)
+
 
     # Create a valid parameter name by replacing periods
     param_name_base = name.replace('.', '_')
@@ -104,9 +114,9 @@ def do_lr(model, name, weight, k):
     layer.forward = low_rank_forward.__get__(layer, type(layer))
     layer._original_forward = original_forward  # Save the original forward method if needed
 
-    weight_approx = results[0] @ torch.diag(results[1]) @ results[2].T
+    weight_approx = U @ S @ Vt
 
-    return model, weight_approx, [getattr(layer, f"{param_name_base}_U"), getattr(layer, f"{param_name_base}_S"), getattr(layer, f"{param_name_base}_Vt")]
+    return model, weight_approx, [getattr(layer, f"{param_name_base}_U"), getattr(layer, f"{param_name_base}_S"), getattr(layer, f"{param_name_base}_Vt")], S_full
 
 
 """

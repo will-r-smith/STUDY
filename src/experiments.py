@@ -191,28 +191,32 @@ class Experiment:
         original_mat_tensor = deepcopy(param)
 
         if self.args.intervention == "lr":
-            model, approx_mat, parameters = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
+            model, approx_mat, parameters, S = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
-        elif self.args.intervention == "psm":
-            model, approx_mat = do_psm(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
         diff_norm, relative_error = norms(original_mat_tensor.type(torch.float32), approx_mat)
 
-        return model, parameters, diff_norm, relative_error
+
+        return model, parameters, diff_norm, relative_error, S
 
 
 
     def intervene(self):
 
-        self.model_edit = deepcopy(self.original_model)
-
         parameters = self.get_parameters()
 
         for name, param in parameters:
 
-            self.edited_model, _ , norm, relative_error = self.intervention(name, param)
+            self.edited_model, _ , norm, relative_error, S = self.intervention(name, param)
 
-            loss, accuracy = self.evaluate()
+            #loss, accuracy = self.evaluate()
+            results = {}
+
+            results["parameter"] = name
+            results["rate"] = self.args.rate
+            results["SVs"] = str(S.tolist())
+
+            self.terminate_and_save(results)
 
 
 
@@ -318,7 +322,7 @@ class Experiment:
 
             torch.cuda.empty_cache()
 
-            self.edited_model, self.trainable_parameters, norm, relative_error = self.intervention(name, param)
+            self.edited_model, self.trainable_parameters, norm, relative_error, S = self.intervention(name, param)
             
             results["norm"] = norm.item()
             results["relative_error"] = relative_error
