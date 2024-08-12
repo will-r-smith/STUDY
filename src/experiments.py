@@ -19,7 +19,9 @@ from src.eval_utils.linguistics import classify_words
 
 from accelerate import Accelerator
 
-#from google.colab import files
+
+from torch import norm as torch_norm
+
 
 import nltk
 
@@ -186,14 +188,12 @@ class Experiment:
         pass
 
 
-
-
     def calculate_metrics(self, matrix):
         """
         Calculates various matrix metrics including Frobenius norm, spectral norm, nuclear norm, condition number, and Shannon entropy.
         
         Args:
-        - matrix (np.ndarray): The input matrix for which to calculate the metrics.
+        - matrix (torch.Tensor): The input matrix for which to calculate the metrics.
 
         Returns:
         - metrics (dict): A dictionary containing the calculated metrics.
@@ -201,20 +201,21 @@ class Experiment:
         metrics = {}
 
         # Frobenius Norm
-        metrics['frobenius_norm'] = norm(matrix, ord='fro')
+        metrics['frobenius_norm'] = torch_norm(matrix, p='fro').item()
         
         # Spectral Norm (Largest Singular Value)
-        metrics['spectral_norm'] = norm(matrix, ord=2)
+        metrics['spectral_norm'] = torch.svd(matrix)[1].max().item()
         
         # Nuclear Norm (Sum of Singular Values)
-        metrics['nuclear_norm'] = norm(matrix, ord='nuc')
+        metrics['nuclear_norm'] = torch.svd(matrix)[1].sum().item()
         
         # Condition Number (Ratio of Largest to Smallest Singular Value)
-        U, s, Vh = svd(matrix, full_matrices=False)
-        metrics['condition_number'] = s[0] / s[-1] if s[-1] != 0 else np.inf
+        U, s, Vh = torch.svd(matrix)
+        metrics['condition_number'] = (s[0] / s[-1]).item() if s[-1] != 0 else np.inf
         
         # Shannon Entropy of Singular Values
-        metrics['shannon_entropy'] = entropy(s / np.sum(s))
+        s_numpy = s.cpu().numpy()
+        metrics['shannon_entropy'] = entropy(s_numpy / np.sum(s_numpy))
         
         return metrics
 
@@ -223,8 +224,8 @@ class Experiment:
         Calculates the energy retained, relative error, and projection error for the low-rank approximation.
         
         Args:
-        - original_mat (np.ndarray): The original matrix.
-        - approx_mat (np.ndarray): The low-rank approximation of the matrix.
+        - original_mat (torch.Tensor): The original matrix.
+        - approx_mat (torch.Tensor): The low-rank approximation of the matrix.
 
         Returns:
         - metrics (dict): A dictionary containing the calculated metrics.
@@ -233,78 +234,70 @@ class Experiment:
 
         # Frobenius norm of the difference
         diff_mat = original_mat - approx_mat
-        metrics['frobenius_diff_norm'] = norm(diff_mat, ord='fro')
+        metrics['frobenius_diff_norm'] = torch_norm(diff_mat, p='fro').item()
         
         # Relative Error
-        metrics['relative_error'] = metrics['frobenius_diff_norm'] / norm(original_mat, ord='fro')
+        metrics['relative_error'] = metrics['frobenius_diff_norm'] / torch_norm(original_mat, p='fro').item()
         
         # Energy Retained
-        U, s, Vh = svd(original_mat, full_matrices=False)
-        energy_original = np.sum(s**2)
-        U_approx, s_approx, Vh_approx = svd(approx_mat, full_matrices=False)
-        energy_approx = np.sum(s_approx**2)
+        U, s, Vh = torch.svd(original_mat)
+        energy_original = torch.sum(s**2).item()
+        U_approx, s_approx, Vh_approx = torch.svd(approx_mat)
+        energy_approx = torch.sum(s_approx**2).item()
         metrics['energy_retained'] = energy_approx / energy_original
         
         # Projection Error
-        projection_error = norm(original_mat @ Vh.T - approx_mat @ Vh_approx.T, ord='fro')
+        projection_error = torch_norm(original_mat @ Vh.T - approx_mat @ Vh_approx.T, p='fro').item()
         metrics['projection_error'] = projection_error
 
         return metrics
 
-
-
-
     def intervention(self, name, param):
-        
-        original_mat = param.detach().cpu().numpy()
-        original_mat_tensor = deepcopy(param)
+        # Convert the parameter to a torch tensor on CPU for processing
+        original_mat_tensor = param.detach().cpu()
+        original_mat = original_mat_tensor.numpy()
 
         if self.args.intervention == "lr":
-            model, approx_mat, parameters, S = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
+            model, approx_mat, parameters, S = do_lr(self.edited_model, name, original_mat_tensor, (1 - self.args.rate))
 
-        approx_mat = approx_mat.detach().cpu().numpy()
-        
+        # Ensure the approx_mat is in tensor format for consistency
+        approx_mat = approx_mat.detach().cpu()
 
-        diff_norm, relative_error = norms(original_mat, approx_mat)
-
+        # Calculate norms
+        diff_norm, relative_error = norms(original_mat_tensor, approx_mat)
 
         # Calculate metrics for the original matrix
-        original_metrics = self.calculate_metrics(original_mat)
+        original_metrics = self.calculate_metrics(original_mat_tensor)
 
         # Calculate metrics for the difference matrix (original - approximation)
-        diff_metrics = self.calculate_metrics(original_mat - approx_mat)
+        diff_metrics = self.calculate_metrics(original_mat_tensor - approx_mat)
 
         # Calculate approximation-specific metrics
-        approx_metrics = self.calculate_approximation_metrics(original_mat_tensor.type(torch.float32), approx_mat)
+        approx_metrics = self.calculate_approximation_metrics(original_mat_tensor, approx_mat)
 
+        # Compile results
         results = {}
-
         for key, val in original_metrics.items():
             results["original_" + key] = val
-        for key, val in original_metrics.items():
+        for key, val in diff_metrics.items():
             results["diff_" + key] = val
-        for key, val in original_metrics.items():
+        for key, val in approx_metrics.items():
             results[key] = val
 
         return model, parameters, diff_norm, relative_error, results
 
-
-
     def intervene(self):
-
         parameters = self.get_parameters()
 
         for name, param in parameters:
             print(name)
 
-            self.edited_model, _ , norm, relative_error, results = self.intervention(name, param)
-
+            self.edited_model, _, norm, relative_error, results = self.intervention(name, param)
 
             results["parameter"] = name
             results["rate"] = self.args.rate
 
             self.terminate_and_save(results)
-
 
 
     def evaluate(self, model, X, y):
