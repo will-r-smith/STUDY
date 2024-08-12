@@ -262,14 +262,17 @@ class Experiment:
         if self.args.intervention == "lr":
             model, approx_mat, parameters, S = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
+        
 
-        diff_norm, relative_error = norms(original_mat_tensor.type(torch.float32), approx_mat)
+        diff_norm, relative_error = norms(original_mat, approx_mat)
+
+        approx_mat = approx_mat.cpu().numpy()
 
         # Calculate metrics for the original matrix
-        original_metrics = self.calculate_metrics(original_mat_tensor.type(torch.float32))
+        original_metrics = self.calculate_metrics(original_mat)
 
         # Calculate metrics for the difference matrix (original - approximation)
-        diff_metrics = self.calculate_metrics(original_mat_tensor.type(torch.float32) - approx_mat)
+        diff_metrics = self.calculate_metrics(original_mat - approx_mat)
 
         # Calculate approximation-specific metrics
         approx_metrics = self.calculate_approximation_metrics(original_mat_tensor.type(torch.float32), approx_mat)
