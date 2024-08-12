@@ -219,6 +219,7 @@ class Experiment:
         
         return metrics
 
+
     def calculate_approximation_metrics(self, original_mat, approx_mat):
         """
         Calculates the energy retained, relative error, and projection error for the low-rank approximation.
@@ -245,10 +246,7 @@ class Experiment:
         U_approx, s_approx, Vh_approx = torch.svd(approx_mat)
         energy_approx = torch.sum(s_approx**2).item()
         metrics['energy_retained'] = energy_approx / energy_original
-        
-        # Projection Error
-        projection_error = torch_norm(original_mat @ Vh.T - approx_mat @ Vh_approx.T, p='fro').item()
-        metrics['projection_error'] = projection_error
+ 
 
         return metrics
 
