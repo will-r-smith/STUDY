@@ -206,6 +206,7 @@ class Experiment:
         parameters = self.get_parameters()
 
         for name, param in parameters:
+            print(name)
 
             self.edited_model, _ , norm, relative_error, S = self.intervention(name, param)
 
