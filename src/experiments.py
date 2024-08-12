@@ -262,11 +262,11 @@ class Experiment:
         if self.args.intervention == "lr":
             model, approx_mat, parameters, S = do_lr(self.edited_model, name, original_mat_tensor.type(torch.float32), (1 - self.args.rate))
 
+        approx_mat = approx_mat.cpu().numpy()
         
 
         diff_norm, relative_error = norms(original_mat, approx_mat)
 
-        approx_mat = approx_mat.cpu().numpy()
 
         # Calculate metrics for the original matrix
         original_metrics = self.calculate_metrics(original_mat)
