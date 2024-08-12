@@ -266,13 +266,13 @@ class Experiment:
         diff_norm, relative_error = norms(original_mat_tensor.type(torch.float32), approx_mat)
 
         # Calculate metrics for the original matrix
-        original_metrics = self.calculate_metrics(original_mat)
+        original_metrics = self.calculate_metrics(original_mat_tensor.type(torch.float32))
 
         # Calculate metrics for the difference matrix (original - approximation)
-        diff_metrics = self.calculate_metrics(original_mat - approx_mat)
+        diff_metrics = self.calculate_metrics(original_mat_tensor.type(torch.float32) - approx_mat)
 
         # Calculate approximation-specific metrics
-        approx_metrics = self.calculate_approximation_metrics(original_mat, approx_mat)
+        approx_metrics = self.calculate_approximation_metrics(original_mat_tensor.type(torch.float32), approx_mat)
 
         results = {}
 
