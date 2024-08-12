@@ -67,6 +67,7 @@ def do_lr(model, name, weight, k):
 
     U = results[0].clone().detach().requires_grad_(True).to(weight.dtype)
     S = torch.diag(results[1]).clone().detach().requires_grad_(True).to(weight.dtype)
+    #S = results[1].clone().detach().requires_grad_(True).to(weight.dtype)
     Vt = results[2].T.clone().detach().requires_grad_(True).to(weight.dtype)
 
     # Create a valid parameter name by replacing periods
@@ -93,6 +94,7 @@ def do_lr(model, name, weight, k):
         Vt = Vt.to(dtype)
 
         weight_approx = U @ S @ Vt
+        #weight_approx = U @ torch.diag(S) @ Vt
         return nn.functional.linear(input, weight_approx)
 
     # Save the original forward method
@@ -107,10 +109,10 @@ def do_lr(model, name, weight, k):
     return model, weight_approx, [getattr(layer, f"{param_name_base}_U"), getattr(layer, f"{param_name_base}_S"), getattr(layer, f"{param_name_base}_Vt")]
 
 
+"""
 
+def do_psm(model, name, weight, reduction_rate, num_matrices=2, num_interpolation_steps=8):
 
-def do_psm(model, name, weight, reduction_rate, num_matrices=3, num_interpolation_steps=20):
-    """
     Applies a sparse matrix approximation to the given weight matrix.
     
     Args:
@@ -125,7 +127,7 @@ def do_psm(model, name, weight, reduction_rate, num_matrices=3, num_interpolatio
     - model: The model with the sparse approximation applied.
     - approx_weight: The approximated weight matrix.
     - trainable_params: List of trainable parameters in the approximated matrix.
-    """
+
 
     # Convert weight matrix to numpy for approximation
     weight_np = weight.detach().cpu().numpy()
@@ -217,6 +219,7 @@ class PSMApproximator(Approximator):
         nb_nonzero_elements = int(optim_mat64.size * self.nnz_share)
         best_approximation = None
         for last_mat_param_share in np.linspace(0.1, self.max_last_mat_param_share, num=num_interpolation_steps):
+            print(last_mat_param_share)
             last_nb_nonzero_elements = int(last_mat_param_share * nb_nonzero_elements)
             res_dict = self.faust_approximation(weights=optim_mat64, last_nb_nonzero_elements=last_nb_nonzero_elements, total_nb_nonzero_elements=nb_nonzero_elements)
             
@@ -398,7 +401,7 @@ class PSMApproximatorWrapper(Approximator):
 
 # Function to project a given matrix onto the MM* class
 def do_mm(weight):
-    """
+
     Project a given weight matrix onto the class of MM* matrices using the Monarch parametrization.
     This implementation handles the general case for rectangular matrices.
     
@@ -485,5 +488,5 @@ def do_mm(weight):
 
     return weight_approx
 
-    """
 
+"""
