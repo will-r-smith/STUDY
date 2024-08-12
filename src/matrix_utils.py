@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from torch.linalg import svd, inv
+from torch.linalg import svd, inv, norm
 
 
 import torch
@@ -13,9 +13,9 @@ import json
 
 def norms(original_mat, approx_mat):
     # Calculate the Frobenius norm
-    frobenius_diff = torch.norm(original_mat - approx_mat, p='fro')
-    frobenius_original = torch.norm(original_mat, p='fro')
-    frobenius_ratio = (frobenius_diff / frobenius_original).item()
+    frobenius_diff = norm(original_mat - approx_mat, ord='fro')
+    frobenius_original = norm(original_mat, ord='fro')
+    frobenius_ratio = frobenius_diff / frobenius_original
 
     return frobenius_diff, frobenius_ratio
 
