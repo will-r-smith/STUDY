@@ -10,7 +10,7 @@ import os
 
 from transformers import AutoTokenizer
 
-from src.matrix_utils import norms, do_lr, do_psm
+from src.matrix_utils import norms, do_lr
 from src.eval_utils.linguistics import classify_words
 
 from accelerate import Accelerator
