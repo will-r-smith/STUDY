@@ -11,6 +11,10 @@ import os
 from transformers import AutoTokenizer
 
 from src.matrix_utils import norms, do_lr
+
+from scipy.linalg import norm, svd
+from scipy.stats import entropy
+
 from src.eval_utils.linguistics import classify_words
 
 from accelerate import Accelerator
@@ -184,6 +188,71 @@ class Experiment:
 
 
 
+    def calculate_metrics(matrix):
+        """
+        Calculates various matrix metrics including Frobenius norm, spectral norm, nuclear norm, condition number, and Shannon entropy.
+        
+        Args:
+        - matrix (np.ndarray): The input matrix for which to calculate the metrics.
+
+        Returns:
+        - metrics (dict): A dictionary containing the calculated metrics.
+        """
+        metrics = {}
+
+        # Frobenius Norm
+        metrics['frobenius_norm'] = norm(matrix, ord='fro')
+        
+        # Spectral Norm (Largest Singular Value)
+        metrics['spectral_norm'] = norm(matrix, ord=2)
+        
+        # Nuclear Norm (Sum of Singular Values)
+        metrics['nuclear_norm'] = norm(matrix, ord='nuc')
+        
+        # Condition Number (Ratio of Largest to Smallest Singular Value)
+        U, s, Vh = svd(matrix, full_matrices=False)
+        metrics['condition_number'] = s[0] / s[-1] if s[-1] != 0 else np.inf
+        
+        # Shannon Entropy of Singular Values
+        metrics['shannon_entropy'] = entropy(s / np.sum(s))
+        
+        return metrics
+
+    def calculate_approximation_metrics(original_mat, approx_mat):
+        """
+        Calculates the energy retained, relative error, and projection error for the low-rank approximation.
+        
+        Args:
+        - original_mat (np.ndarray): The original matrix.
+        - approx_mat (np.ndarray): The low-rank approximation of the matrix.
+
+        Returns:
+        - metrics (dict): A dictionary containing the calculated metrics.
+        """
+        metrics = {}
+
+        # Frobenius norm of the difference
+        diff_mat = original_mat - approx_mat
+        metrics['frobenius_diff_norm'] = norm(diff_mat, ord='fro')
+        
+        # Relative Error
+        metrics['relative_error'] = metrics['frobenius_diff_norm'] / norm(original_mat, ord='fro')
+        
+        # Energy Retained
+        U, s, Vh = svd(original_mat, full_matrices=False)
+        energy_original = np.sum(s**2)
+        U_approx, s_approx, Vh_approx = svd(approx_mat, full_matrices=False)
+        energy_approx = np.sum(s_approx**2)
+        metrics['energy_retained'] = energy_approx / energy_original
+        
+        # Projection Error
+        projection_error = norm(original_mat @ Vh.T - approx_mat @ Vh_approx.T, ord='fro')
+        metrics['projection_error'] = projection_error
+
+        return metrics
+
+
+
 
     def intervention(self, name, param):
         
@@ -196,8 +265,25 @@ class Experiment:
 
         diff_norm, relative_error = norms(original_mat_tensor.type(torch.float32), approx_mat)
 
+        # Calculate metrics for the original matrix
+        original_metrics = self.calculate_metrics(original_mat)
 
-        return model, parameters, diff_norm, relative_error, S
+        # Calculate metrics for the difference matrix (original - approximation)
+        diff_metrics = self.calculate_metrics(original_mat - approx_mat)
+
+        # Calculate approximation-specific metrics
+        approx_metrics = self.calculate_approximation_metrics(original_mat, approx_mat)
+
+        results = {}
+
+        for key, val in original_metrics.items():
+            results["original_" + key] = val
+        for key, val in original_metrics.items():
+            results["diff_" + key] = val
+        for key, val in original_metrics.items():
+            results[key] = val
+
+        return model, parameters, diff_norm, relative_error, results
 
 
 
@@ -208,14 +294,11 @@ class Experiment:
         for name, param in parameters:
             print(name)
 
-            self.edited_model, _ , norm, relative_error, S = self.intervention(name, param)
+            self.edited_model, _ , norm, relative_error, results = self.intervention(name, param)
 
-            #loss, accuracy = self.evaluate()
-            results = {}
 
             results["parameter"] = name
             results["rate"] = self.args.rate
-            results["SVs"] = str(S.tolist())
 
             self.terminate_and_save(results)
 
