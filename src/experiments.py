@@ -188,7 +188,7 @@ class Experiment:
 
 
 
-    def calculate_metrics(matrix):
+    def calculate_metrics(self, matrix):
         """
         Calculates various matrix metrics including Frobenius norm, spectral norm, nuclear norm, condition number, and Shannon entropy.
         
@@ -218,7 +218,7 @@ class Experiment:
         
         return metrics
 
-    def calculate_approximation_metrics(original_mat, approx_mat):
+    def calculate_approximation_metrics(self, original_mat, approx_mat):
         """
         Calculates the energy retained, relative error, and projection error for the low-rank approximation.
         
