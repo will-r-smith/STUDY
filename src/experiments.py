@@ -212,6 +212,8 @@ class Experiment:
         # Condition Number (Ratio of Largest to Smallest Singular Value)
         U, s, Vh = torch.svd(matrix)
         metrics['condition_number'] = (s[0] / s[-1]).item() if s[-1] != 0 else np.inf
+
+        metrics['cut_off_sv'] = s[-1].item()
         
         # Shannon Entropy of Singular Values
         s_numpy = s.cpu().numpy()
@@ -265,24 +267,29 @@ class Experiment:
         diff_norm, relative_error = norms(original_mat_tensor, approx_mat)
 
         # Calculate metrics for the original matrix
-        original_metrics = self.calculate_metrics(original_mat_tensor)
+        #original_metrics = self.calculate_metrics(original_mat_tensor)
 
         # Calculate metrics for the difference matrix (original - approximation)
-        diff_metrics = self.calculate_metrics(original_mat_tensor - approx_mat)
+        #diff_metrics = self.calculate_metrics(original_mat_tensor - approx_mat)
+
+        edited_metrics = self.calculate_metrics(approx_mat)
 
         # Calculate approximation-specific metrics
-        approx_metrics = self.calculate_approximation_metrics(original_mat_tensor, approx_mat)
+        #approx_metrics = self.calculate_approximation_metrics(original_mat_tensor, approx_mat)
 
         # Compile results
         results = {}
-        for key, val in original_metrics.items():
-            results["original_" + key] = val
-        for key, val in diff_metrics.items():
-            results["diff_" + key] = val
-        for key, val in approx_metrics.items():
-            results[key] = val
+        #for key, val in original_metrics.items():
+        #    results["original_" + key] = val
+        #for key, val in diff_metrics.items():
+        #    results["diff_" + key] = val
+        for key, val in edited_metrics.items():
+            results["edited_" + key] = val
+        #for key, val in approx_metrics.items():
+         #   results[key] = val
 
         return model, parameters, diff_norm, relative_error, results
+
 
     def intervene(self):
         parameters = self.get_parameters()
