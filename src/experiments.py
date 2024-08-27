@@ -486,7 +486,7 @@ class Experiment:
 
             results["epoch_losses"] = str(epoch_losses)
 
-            final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X, self.y)
+            final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
 
             results["final_loss"] = final_loss
@@ -525,7 +525,6 @@ class Experiment:
             df = results_df
 
         df.to_csv(path, index=False)
-
 
 
 
@@ -631,7 +630,7 @@ class Experiment:
 
             results["epoch_losses"] = str(epoch_losses)
 
-            final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X, self.y)
+            final_loss, final_top1_accuracy, final_top10_accuracy, final_top1_words, final_top10_words = self.evaluate(self.edited_model, self.X_val, self.y_val)
 
             results["final_loss"] = final_loss
             results["final_top1_accuracy"] = final_top1_accuracy
