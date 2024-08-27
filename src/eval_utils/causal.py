@@ -20,7 +20,6 @@ def generate_outputs(self, model, X, y, requires_grad, get_accuracy):
     input_lengths = [len(self.tokenizer.encode(x, truncation=True)) for x in X]
 
     # Extract the last token index for each sequence before padding
-    #answer_positions = torch.tensor([input_lengths[i] - 1 for i in range(len(X))]).to(self.device)
     answer_positions = torch.tensor([input_lengths[i] - 1 for i in range(len(X))]).to(self.device)
 
 

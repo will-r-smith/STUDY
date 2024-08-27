@@ -5,3 +5,7 @@ cache/*
 outputs/*
 
 plotting.ipynb
+
+analysis.ipynb
+
+data/*
