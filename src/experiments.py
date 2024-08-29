@@ -148,6 +148,10 @@ class Experiment:
 
         self.dataset_size = len(self.X)
 
+        for i in range(30):
+            print(self.X[i])
+            print(self.y[i])
+
         if self.args.verbose > 0:
             print("Dataset loaded.")
             print(f"Size: {self.dataset_size}")
