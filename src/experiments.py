@@ -112,9 +112,9 @@ class Experiment:
         self.accelerator = Accelerator()
         self.edited_model = self.accelerator.prepare(self.edited_model)
 
-        for name, param in self.edited_model.named_parameters():
-            print(name)
-            print(param.shape)
+        #for name, param in self.edited_model.named_parameters():
+        #    print(name)
+        #    print(param.shape)
 
             
 
@@ -148,9 +148,9 @@ class Experiment:
 
         self.dataset_size = len(self.X)
 
-        for i in range(30):
-            print(self.X[i])
-            print(self.y[i])
+        #for i in range(30):
+        #    print(self.X[i])
+        #    print(self.y[i])
 
         if self.args.verbose > 0:
             print("Dataset loaded.")
